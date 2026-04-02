@@ -136,7 +136,7 @@ def _get_latest_offer_from_messages(
     return None
 
 
-async def surplus_reward(completion: Messages, info: dict, **kwargs) -> float:
+def surplus_reward(completion: Messages, info: dict, **kwargs) -> float:
     """Reward buyer surplus on successful deals."""
     state = kwargs.get("state", {})
     if not state.get("deal_reached"):
@@ -152,7 +152,7 @@ async def surplus_reward(completion: Messages, info: dict, **kwargs) -> float:
     return float(max(-1.0, min(1.0, surplus)))
 
 
-async def walkaway_penalty(completion: Messages, info: dict, **kwargs) -> float:
+def walkaway_penalty(completion: Messages, info: dict, **kwargs) -> float:
     """Reward or penalize the final deal/walk outcome."""
     state = kwargs.get("state", {})
     deal_reached = bool(state.get("deal_reached", False))
@@ -169,7 +169,7 @@ async def walkaway_penalty(completion: Messages, info: dict, **kwargs) -> float:
     return 0.0
 
 
-async def format_reward(completion: Messages, info: dict, **kwargs) -> float:
+def format_reward(completion: Messages, info: dict, **kwargs) -> float:
     """Reward compliance with required buyer action-tag formatting."""
     buyer_turns = [message for message in completion if message["role"] == "assistant"]
     if not buyer_turns:
@@ -180,7 +180,7 @@ async def format_reward(completion: Messages, info: dict, **kwargs) -> float:
     return valid / len(buyer_turns)
 
 
-async def efficiency_bonus(completion: Messages, info: dict, **kwargs) -> float:
+def efficiency_bonus(completion: Messages, info: dict, **kwargs) -> float:
     """Reward closing a deal in fewer turns."""
     state = kwargs.get("state", {})
     if not state.get("deal_reached"):
@@ -193,7 +193,7 @@ async def efficiency_bonus(completion: Messages, info: dict, **kwargs) -> float:
     return (max_turns - state.get("turn", max_turns)) / max_turns
 
 
-async def anchoring_reward(completion: Messages, info: dict, **kwargs) -> float:
+def anchoring_reward(completion: Messages, info: dict, **kwargs) -> float:
     """Reward opening with a strategically low anchor."""
     state = kwargs.get("state", {})
     buyer_true_value = (
@@ -213,7 +213,7 @@ async def anchoring_reward(completion: Messages, info: dict, **kwargs) -> float:
     return float(1.0 - 2.0 * distance)
 
 
-async def negotiation_progress_reward(
+def negotiation_progress_reward(
     completion: Messages, info: dict, **kwargs
 ) -> float:
     """Reward controlled upward concessions and penalize backtracking."""
@@ -245,13 +245,6 @@ async def negotiation_progress_reward(
     return float(sum(rewards) / len(rewards))
 
 
-def _run_async_reward_fn(reward_fn, completion: Messages, info: dict, state: dict) -> float:
-    """Execute one async reward function synchronously."""
-    import asyncio
-
-    return asyncio.run(reward_fn(completion, info, state=state))
-
-
 def reward_breakdown(trajectory: TrajectoryResult) -> dict[str, float]:
     """Compute all trajectory-level reward components."""
     completion = buyer_completion_messages(trajectory)
@@ -259,19 +252,13 @@ def reward_breakdown(trajectory: TrajectoryResult) -> dict[str, float]:
     state = reward_state(trajectory)
 
     return {
-        "surplus_reward": _run_async_reward_fn(surplus_reward, completion, info, state),
-        "walkaway_penalty": _run_async_reward_fn(
-            walkaway_penalty, completion, info, state
-        ),
-        "format_reward": _run_async_reward_fn(format_reward, completion, info, state),
-        "efficiency_bonus": _run_async_reward_fn(
-            efficiency_bonus, completion, info, state
-        ),
-        "anchoring_reward": _run_async_reward_fn(
-            anchoring_reward, completion, info, state
-        ),
-        "negotiation_progress_reward": _run_async_reward_fn(
-            negotiation_progress_reward, completion, info, state
+        "surplus_reward": surplus_reward(completion, info, state=state),
+        "walkaway_penalty": walkaway_penalty(completion, info, state=state),
+        "format_reward": format_reward(completion, info, state=state),
+        "efficiency_bonus": efficiency_bonus(completion, info, state=state),
+        "anchoring_reward": anchoring_reward(completion, info, state=state),
+        "negotiation_progress_reward": negotiation_progress_reward(
+            completion, info, state=state
         ),
     }
 

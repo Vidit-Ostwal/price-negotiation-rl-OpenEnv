@@ -33,6 +33,10 @@ except ImportError:
     )
     from server.helper_functions import get_openai_response
 
+import os
+DEFAULT_OPENAI_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+SELLER_MODEL = os.getenv("SELLER_MODEL", DEFAULT_OPENAI_MODEL)
+
 
 class PriceNegotiationEnvironment(Environment):
     """
@@ -182,7 +186,7 @@ class PriceNegotiationEnvironment(Environment):
                 reward=0.0,
             )
 
-        seller_response = get_openai_response(self.seller_messages)
+        seller_response = get_openai_response(self.seller_messages, SELLER_MODEL)
         self._append_seller_response(seller_response)
         self._refresh_state()
 
