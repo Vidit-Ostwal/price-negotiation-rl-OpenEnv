@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover
 
 DEFAULT_OPENAI_MODEL = "Qwen/Qwen2.5-72B-Instruct"
 API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL")
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 SELLER_MODEL = os.getenv("SELLER_MODEL", DEFAULT_OPENAI_MODEL)
 
 
@@ -62,7 +62,8 @@ def check_openai_response(model: str | None = None) -> bool:
             model=model,
             temperature=0.0,
         )
-    except Exception:
+    except Exception as Error:
+        print(Error)
         return False
 
     return bool(response.strip())

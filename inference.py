@@ -43,6 +43,7 @@ STDOUT FORMAT
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import time
 import sys
@@ -68,12 +69,24 @@ API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("BUYER_MODEL") or os.getenv("MODEL_NAME") or DEFAULT_OPENAI_MODEL
 IMAGE_NAME = os.getenv("IMAGE_NAME") or os.getenv("LOCAL_IMAGE_NAME") or "openenv-price_negotiation"
-ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "http://localhost:8000"
+ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "https://huggingface.co/spaces/ViditOstwal/price_negotiation"
 TASK_NAME = os.getenv("TASK_NAME") or "price-negotiation"
 BENCHMARK = os.getenv("BENCHMARK") or "price_negotiation"
 TEMPERATURE = float(os.getenv("BUYER_TEMPERATURE") or "0.7")
 SUCCESS_SCORE_THRESHOLD = float(os.getenv("SUCCESS_SCORE_THRESHOLD") or "0.0")
 DEBUG = os.getenv("DEBUG", "").lower() in {"1", "true", "yes", "on"}
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments for inference."""
+    parser = argparse.ArgumentParser(description="Run a price negotiation rollout.")
+    parser.add_argument(
+        "-d",
+        "--difficulty",
+        choices=("easy", "medium", "hard"),
+        help="Difficulty of the sampled negotiation scenario.",
+    )
+    return parser.parse_args()
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -145,7 +158,7 @@ def _docker_env_vars() -> dict[str, str]:
 async def _connect_env():
     if IMAGE_NAME:
         debug_print(f"[DEBUG] starting docker image: {IMAGE_NAME}")
-        debug_print(f"[DEBUG] docker env vars: {_docker_env_vars()}")
+        # debug_print(f"[DEBUG] docker env vars: {_docker_env_vars()}")
         env = await PriceNegotiationEnv.from_docker_image(
             IMAGE_NAME,
             env_vars=_docker_env_vars(),
@@ -161,6 +174,7 @@ async def _connect_env():
 
 
 async def main() -> None:
+    args = parse_args()
     env = None
     rewards: list[float] = []
     steps_taken = 0
@@ -176,13 +190,14 @@ async def main() -> None:
         debug_print("[DEBUG] env connection object created")
         debug_print(f"[DEBUG] env={env}")
         debug_print("[DEBUG] env connected")
-        reset_result = await env.reset()
+        reset_result = await env.reset(difficulty=args.difficulty)
         debug_print(f"[DEBUG] reset_result={reset_result}")
         state = await env.state()
         debug_print(f"[DEBUG] state={state}")
         debug_print(
             f"[DEBUG] reset complete: episode_id={state.episode_id} step_count={state.step_count}"
         )
+        debug_print(f"[DEBUG] requested difficulty={args.difficulty}")
         debug_print(
             f"[DEBUG] sampled product: {state.product_info.get('product', {}).get('name', 'unknown')}"
         )

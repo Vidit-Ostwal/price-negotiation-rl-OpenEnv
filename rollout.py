@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from price_negotiation import (
     PriceNegotiationAction,
     PriceNegotiationEnv,
@@ -45,10 +47,11 @@ def run_rollout(
     buyer_model: str,
     temperature: float,
     max_turns: int | None,
+    difficulty: Literal["easy", "medium", "hard"] | None = None,
 ) -> TrajectoryResult:
     """Connect to the server and run one full buyer-seller trajectory."""
     with PriceNegotiationEnv(base_url=base_url).sync() as env:
-        reset_result = env.reset()
+        reset_result = env.reset(difficulty=difficulty)
         state = env.state()
         steps: list[TrajectoryStep] = []
 

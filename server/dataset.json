@@ -1,6 +1,7 @@
 [
     {
       "episode_id": "5f0a1055-e72f-4614-a67f-fa83654f1af7",
+      "difficulty": "easy",
       "product": {
         "name": "1920s Sevres Porcelain Vase with Cobalt Glaze",
         "category": "antiques",
@@ -19,7 +20,7 @@
         ],
         "zopa_width": 120,
         "deal_possible": true,
-        "difficulty": "hard",
+        "difficulty": "easy",
         "suggested_buyer_anchor": 430
       },
       "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This exquisite 1920s Sevres porcelain vase features a deep cobalt blue glaze and intricate gold detailing. The vase is in excellent condition with minor wear on the base, making it a perfect addition to any antique collection.\nCATEGORY: antiques\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $710.\n- You believe the fair market value is around $1250.\n- If you pay less than $710, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: blunt and businesslike\n- URGENCY: low urgency; you can wait for a better listing\n- FLEXIBILITY: soft ceiling, but only if the overall deal feels unusually strong\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: open low, then make one meaningful move before tightening up\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $710.",
@@ -52,6 +53,7 @@
     },
     {
       "episode_id": "3b10de14-338a-495a-ad7a-60f66555815a",
+      "difficulty": "medium",
       "product": {
         "name": "Nikon D850 DSLR Camera Body",
         "category": "photography",
@@ -103,6 +105,7 @@
     },
     {
       "episode_id": "60e5708c-1ef5-4436-9e69-476e869dc764",
+      "difficulty": "hard",
       "product": {
         "name": "Ergonomic Mesh Office Chair",
         "category": "office_equipment",
@@ -145,105 +148,6 @@
           "tone": "confident and premium-positioned",
           "urgency": "low urgency; you can wait for the right buyer",
           "flexibility": "moderate flexibility if it helps close near your target range",
-          "information_strategy": "emphasize condition, provenance, and quality details",
-          "concession_strategy": "start high, then narrow the gap slowly",
-          "objective": "protect margin and keep the final price near market"
-        },
-        "generator_version": "2.1-hf-llm"
-      }
-    },
-    {
-      "episode_id": "791d37d9-5a75-44ce-a45d-1d25eb57280c",
-      "product": {
-        "name": "1920s Sevres Porcelain Vase with Cobalt Glaze",
-        "category": "art",
-        "description": "This exquisite 1920s Sevres porcelain vase features a deep cobalt glaze with intricate gold leaf detailing. It is in excellent condition with minor wear on the base, perfect for collectors or home decor enthusiasts.",
-        "market_price": 1160,
-        "haggle_norm": "medium",
-        "typical_discount_pct": 15
-      },
-      "valuations": {
-        "buyer_true_value": 750,
-        "seller_reserve_price": 750,
-        "market_price": 1160,
-        "zopa": [
-          750,
-          750
-        ],
-        "zopa_width": 0,
-        "deal_possible": true,
-        "difficulty": "no_deal",
-        "suggested_buyer_anchor": 560
-      },
-      "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This exquisite 1920s Sevres porcelain vase features a deep cobalt glaze with intricate gold leaf detailing. It is in excellent condition with minor wear on the base, perfect for collectors or home decor enthusiasts.\nCATEGORY: art\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $750.\n- You believe the fair market value is around $1160.\n- If you pay less than $750, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: blunt and businesslike\n- URGENCY: low urgency; you can wait for a better listing\n- FLEXIBILITY: strict budget with very limited room to stretch\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: only make small step-by-step increases\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $750.",
-      "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This exquisite 1920s Sevres porcelain vase features a deep cobalt glaze with intricate gold leaf detailing. It is in excellent condition with minor wear on the base, perfect for collectors or home decor enthusiasts.\nCATEGORY: art\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $750.\n- You know the fair market value is around $1160.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou understand attribution, period, technique, and comparable auction results.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: firm and no-nonsense\n- URGENCY: high urgency; you want to close efficiently without looking desperate\n- FLEXIBILITY: moderate flexibility if it helps close near your target range\n- INFORMATION STRATEGY: support your asks with comps, replacement cost, and market demand\n- CONCESSION STRATEGY: make small reciprocal concessions only\n- OBJECTIVE: test the buyer's seriousness before offering meaningful movement\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $750.",
-      "information_asymmetry": {
-        "seller_context": "full",
-        "buyer_context": "sparse"
-      },
-      "metadata": {
-        "max_turns": 10,
-        "currency": "USD",
-        "buyer_behavior": {
-          "tone": "blunt and businesslike",
-          "urgency": "low urgency; you can wait for a better listing",
-          "flexibility": "strict budget with very limited room to stretch",
-          "information_strategy": "reference market comps and alternatives when challenging the seller",
-          "concession_strategy": "only make small step-by-step increases",
-          "objective": "pressure-test the seller's floor before deciding"
-        },
-        "seller_behavior": {
-          "tone": "firm and no-nonsense",
-          "urgency": "high urgency; you want to close efficiently without looking desperate",
-          "flexibility": "moderate flexibility if it helps close near your target range",
-          "information_strategy": "support your asks with comps, replacement cost, and market demand",
-          "concession_strategy": "make small reciprocal concessions only",
-          "objective": "test the buyer's seriousness before offering meaningful movement"
-        },
-        "generator_version": "2.1-hf-llm"
-      }
-    },
-    {
-      "episode_id": "4abddd37-f866-4626-8128-3839938a8be3",
-      "product": {
-        "name": "1920s Sevres Porcelain Vase with Cobalt Glaze",
-        "category": "art",
-        "description": "This elegant vase is in excellent condition with minimal wear, showcasing intricate floral patterns and a vibrant cobalt blue glaze. A small chip on the rim has been professionally restored, enhancing its resale value.",
-        "market_price": 1320,
-        "haggle_norm": "medium",
-        "typical_discount_pct": 15
-      },
-      "valuations": {
-        "buyer_true_value": 880,
-        "seller_reserve_price": 950,
-        "market_price": 1320,
-        "zopa": null,
-        "zopa_width": 0,
-        "deal_possible": false,
-        "difficulty": "no_deal",
-        "suggested_buyer_anchor": 580
-      },
-      "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This elegant vase is in excellent condition with minimal wear, showcasing intricate floral patterns and a vibrant cobalt blue glaze. A small chip on the rim has been professionally restored, enhancing its resale value.\nCATEGORY: art\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $880.\n- You believe the fair market value is around $1320.\n- If you pay less than $880, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: friendly and conversational\n- URGENCY: low urgency; you can wait for a better listing\n- FLEXIBILITY: moderate flexibility if the seller justifies the price well\n- INFORMATION STRATEGY: highlight flaws, risks, and uncertainty to justify a lower price\n- CONCESSION STRATEGY: move up only after the seller makes a real concession\n- OBJECTIVE: maximize surplus and avoid overpaying\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $880.",
-      "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This elegant vase is in excellent condition with minimal wear, showcasing intricate floral patterns and a vibrant cobalt blue glaze. A small chip on the rim has been professionally restored, enhancing its resale value.\nCATEGORY: art\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $950.\n- You know the fair market value is around $1320.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou understand attribution, period, technique, and comparable auction results.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: warm and rapport-building\n- URGENCY: low urgency; you can wait for the right buyer\n- FLEXIBILITY: willing to trade some price for speed and certainty\n- INFORMATION STRATEGY: emphasize condition, provenance, and quality details\n- CONCESSION STRATEGY: start high, then narrow the gap slowly\n- OBJECTIVE: protect margin and keep the final price near market\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $950.",
-      "information_asymmetry": {
-        "seller_context": "full",
-        "buyer_context": "sparse"
-      },
-      "metadata": {
-        "max_turns": 10,
-        "currency": "USD",
-        "buyer_behavior": {
-          "tone": "friendly and conversational",
-          "urgency": "low urgency; you can wait for a better listing",
-          "flexibility": "moderate flexibility if the seller justifies the price well",
-          "information_strategy": "highlight flaws, risks, and uncertainty to justify a lower price",
-          "concession_strategy": "move up only after the seller makes a real concession",
-          "objective": "maximize surplus and avoid overpaying"
-        },
-        "seller_behavior": {
-          "tone": "warm and rapport-building",
-          "urgency": "low urgency; you can wait for the right buyer",
-          "flexibility": "willing to trade some price for speed and certainty",
           "information_strategy": "emphasize condition, provenance, and quality details",
           "concession_strategy": "start high, then narrow the gap slowly",
           "objective": "protect margin and keep the final price near market"

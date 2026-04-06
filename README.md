@@ -122,7 +122,15 @@ The environment state also exposes:
 Example:
 
 ```bash
-uv run python inference.py --base-url http://localhost:8000 --buyer-model gpt-4.1-mini --verbose
+uv run python inference.py
+```
+
+To request a specific scenario difficulty from the CLI, use:
+
+```bash
+uv run python inference.py --difficulty easy
+uv run python inference.py -d medium
+uv run python inference.py --difficulty hard
 ```
 
 This script:
@@ -131,6 +139,7 @@ This script:
 - Generates buyer turns with an OpenAI model
 - Captures the final negotiation trajectory
 - Prints a reward breakdown and final trajectory score
+- Accepts `--difficulty` or `-d` with `easy`, `medium`, or `hard` and forwards it to the environment reset call
 
 Reward helpers in `reward.py` include components such as deal outcome, surplus, formatting compliance, efficiency, anchoring, and concession quality.
 

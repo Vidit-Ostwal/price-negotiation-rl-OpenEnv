@@ -14,6 +14,7 @@ Perfect for testing HTTP server infrastructure.
 import json
 import random
 from pathlib import Path
+from typing import Literal
 from uuid import uuid4
 
 from openenv.core.env_server.interfaces import Environment
@@ -36,6 +37,7 @@ except ImportError:
 import os
 DEFAULT_OPENAI_MODEL = "Qwen/Qwen2.5-72B-Instruct"
 SELLER_MODEL = os.getenv("SELLER_MODEL", DEFAULT_OPENAI_MODEL)
+Difficulty = Literal["easy", "medium", "hard"]
 
 
 class PriceNegotiationEnvironment(Environment):
@@ -86,6 +88,21 @@ class PriceNegotiationEnvironment(Environment):
         """Pick one random negotiation scenario for the new episode."""
         return random.choice(self._dataset)
 
+    def _sample_product_info_for_difficulty(self, difficulty: Difficulty | None) -> dict:
+        """Pick a scenario matching the requested difficulty when provided."""
+        if difficulty is None:
+            return self._sample_product_info()
+
+        matches = [
+            item
+            for item in self._dataset
+            if item.get("difficulty") == difficulty
+            or item.get("valuations", {}).get("difficulty") == difficulty
+        ]
+        if not matches:
+            raise ValueError(f"Unknown or unavailable difficulty: {difficulty}")
+        return random.choice(matches)
+
     def _initialize_messages(self) -> None:
         """Seed buyer and seller chat histories with system prompts."""
         self.buyer_messages = [
@@ -131,16 +148,26 @@ class PriceNegotiationEnvironment(Environment):
             }
         )
 
-    def reset(self) -> PriceNegotiationObservation:
+    def reset(
+        self,
+        seed: int | None = None,
+        episode_id: str | None = None,
+        difficulty: Difficulty | None = None,
+        **kwargs,
+    ) -> PriceNegotiationObservation:
         """
         Reset the environment.
 
         Returns:
             PriceNegotiationObservation with a ready message
         """
-        self._state = PriceNegotiationState(episode_id=str(uuid4()), step_count=0)
+        del seed, kwargs
+        self._state = PriceNegotiationState(
+            episode_id=episode_id or str(uuid4()),
+            step_count=0,
+        )
         self._reset_count += 1
-        self.product_info = self._sample_product_info()
+        self.product_info = self._sample_product_info_for_difficulty(difficulty)
         self._initialize_messages()
         self._refresh_state()
 
