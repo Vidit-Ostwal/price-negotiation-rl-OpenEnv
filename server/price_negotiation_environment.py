@@ -12,7 +12,6 @@ Perfect for testing HTTP server infrastructure.
 """
 
 import json
-import random
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -85,8 +84,11 @@ class PriceNegotiationEnvironment(Environment):
             return json.load(dataset_file)
 
     def _sample_product_info(self) -> dict:
-        """Pick one random negotiation scenario for the new episode."""
-        return random.choice(self._dataset)
+        """Pick a negotiation scenario by cycling through the dataset."""
+        if not self._dataset:
+            raise ValueError("Dataset is empty")
+        index = (self._reset_count - 1) % len(self._dataset)
+        return self._dataset[index]
 
     def _sample_product_info_for_difficulty(self, difficulty: Difficulty | None) -> dict:
         """Pick a scenario matching the requested difficulty when provided."""
@@ -101,7 +103,8 @@ class PriceNegotiationEnvironment(Environment):
         ]
         if not matches:
             raise ValueError(f"Unknown or unavailable difficulty: {difficulty}")
-        return random.choice(matches)
+        index = (self._reset_count - 1) % len(matches)
+        return matches[index]
 
     def _initialize_messages(self) -> None:
         """Seed buyer and seller chat histories with system prompts."""
