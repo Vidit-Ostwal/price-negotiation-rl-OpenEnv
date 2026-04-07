@@ -103,7 +103,7 @@ def log_step(
     error_val = error if error else "null"
     done_val = str(done).lower()
     print(
-        f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}",
+        f"[STEP] step={step} action={action[:10]} reward={reward:.2f} done={done_val} error={error_val}",
         flush=True,
     )
 
@@ -216,62 +216,36 @@ async def main() -> None:
                 debug_print(f"[DEBUG] generating buyer response for step={step_number}")
                 buyer_response = _generate_buyer_response(state)
                 debug_print(f"[DEBUG] buyer response step={step_number}: {buyer_response}")
-                step_result = await env.step(
-                    PriceNegotiationAction(buyer_response=buyer_response)
-                )
+                step_result = await env.step(PriceNegotiationAction(buyer_response=buyer_response))
                 state = await env.state()
                 seller_reply = latest_seller_reply(state)
-                reward = float(step_result.reward or 0.0)
                 done = bool(step_result.done)
 
-                trajectory_steps.append(
-                    TrajectoryStep(
-                        buyer_response=buyer_response,
-                        observation=step_result.observation,
-                        state=state.model_copy(deep=True),
-                        seller_reply=seller_reply,
-                    )
-                )
-                rewards.append(reward)
+                trajectory_steps.append(TrajectoryStep(buyer_response=buyer_response,observation=step_result.observation,state=state.model_copy(deep=True),seller_reply=seller_reply))
+                trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
+                score = score_trajectory(trajectory)
+
+                rewards.append(score)
                 steps_taken = step_number
 
-                log_step(
-                    step=step_number,
-                    action=buyer_response,
-                    reward=reward,
-                    done=done,
-                    error=None,
-                )
+                log_step(step=step_number,action=buyer_response,reward=score,done=done,error=None)
                 debug_print(f"[DEBUG] step={step_number} seller_reply={seller_reply}")
-                debug_print(
-                    f"[DEBUG] step={step_number} status={step_result.observation.deal_status} reward={reward} done={done}"
-                )
+                debug_print(f"[DEBUG] step={step_number} status={step_result.observation.deal_status} reward={score} done={done}")
 
                 if done:
                     debug_print(f"[DEBUG] stopping rollout: env done at step={step_number}")
                     break
+
             except Exception as exc:
                 error_message = str(exc) or "unknown-error"
                 debug_print(f"[DEBUG] step exception at step={step_number}: {error_message}")
                 rewards.append(0.0)
                 steps_taken = step_number
-                log_step(
-                    step=step_number,
-                    action=locals().get("buyer_response", ""),
-                    reward=0.0,
-                    done=True,
-                    error=error_message,
-                )
+                log_step(step=step_number,action=locals().get("buyer_response", ""),reward=0.0,done=True,error=error_message)
                 break
 
-        trajectory = _build_trajectory(
-            initial_observation=reset_result.observation,
-            final_state=state,
-            steps=trajectory_steps,
-        )
-        debug_print(
-            f"[DEBUG] built trajectory with {len(trajectory_steps)} steps; computing reward"
-        )
+        trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
+        debug_print(f"[DEBUG] built trajectory with {len(trajectory_steps)} steps; computing reward")
         reward_breakdown_score = reward_breakdown(trajectory)
         score = score_trajectory(trajectory)
         success = score >= SUCCESS_SCORE_THRESHOLD
