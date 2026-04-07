@@ -115,7 +115,7 @@ def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> No
         rewards_str = str(rewards)
 
     print(
-        f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}",
+        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
         flush=True,
     )
 
