@@ -5,9 +5,15 @@ runtime: fastapi
 app: server.app:app
 port: 8000
 tasks:
-  - id: task_easy
-    grader: price_negotiation.graders:EasyGrader
-  - id: task_medium
-    grader: price_negotiation.graders:MediumGrader
-  - id: task_hard
-    grader: price_negotiation.graders:HardGrader
+  - difficulty: easy
+    grader:
+      type: llm
+      prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
+  - difficulty: medium
+    grader:
+      type: llm
+      prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
+  - difficulty: hard
+    grader:
+      type: llm
+      prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
