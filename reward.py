@@ -21,6 +21,11 @@ ACTION_RE = re.compile(
 )
 
 
+def _clamp(value: float, low: float, high: float) -> float:
+    """Clamp a scalar into a closed interval."""
+    return max(low, min(high, value))
+
+
 def extract_last_price(text: str | None) -> float:
     """Extract the last dollar price mentioned in a message."""
     if not text:
@@ -210,7 +215,7 @@ def anchoring_reward(completion: Messages, info: dict, **kwargs) -> float:
     opening_offer = buyer_offers[0]
     ideal = 0.65 * buyer_true_value
     distance = abs(opening_offer - ideal) / buyer_true_value
-    return float(1.0 - 2.0 * distance)
+    return float(_clamp(1.0 - 2.0 * distance, -1.0, 1.0))
 
 
 def negotiation_progress_reward(
@@ -242,7 +247,7 @@ def negotiation_progress_reward(
         step_score = 1.0 - alpha * ratio
         rewards.append(step_score)
 
-    return float(sum(rewards) / len(rewards))
+    return float(_clamp(sum(rewards) / len(rewards), -1.0, 1.0))
 
 
 def reward_breakdown(trajectory: TrajectoryResult) -> dict[str, float]:
@@ -264,6 +269,16 @@ def reward_breakdown(trajectory: TrajectoryResult) -> dict[str, float]:
 
 
 def score_trajectory(trajectory: TrajectoryResult) -> float:
-    """Aggregate the full trajectory reward from component scores."""
+    """Aggregate component scores into a continuous reward in [0, 1]."""
     breakdown = reward_breakdown(trajectory)
-    return float(sum(breakdown.values()))
+    normalized = {
+        "surplus_reward": (breakdown["surplus_reward"] + 1.0) / 2.0,
+        "walkaway_penalty": (breakdown["walkaway_penalty"] + 5.0) / 10.0,
+        "format_reward": breakdown["format_reward"],
+        "efficiency_bonus": breakdown["efficiency_bonus"],
+        "anchoring_reward": (breakdown["anchoring_reward"] + 1.0) / 2.0,
+        "negotiation_progress_reward": (
+            breakdown["negotiation_progress_reward"] + 1.0
+        ) / 2.0,
+    }
+    return float(sum(normalized.values()) / len(normalized))
