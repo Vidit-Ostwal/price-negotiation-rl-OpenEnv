@@ -51,6 +51,8 @@ from pathlib import Path
 from typing import Optional
 import json
 
+from server.price_negotiation_environment import Difficulty
+
 PACKAGE_ROOT = Path(__file__).resolve().parent
 PACKAGE_PARENT = PACKAGE_ROOT.parent
 if str(PACKAGE_PARENT) not in sys.path:
@@ -69,7 +71,7 @@ API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("BUYER_MODEL") or os.getenv("MODEL_NAME") or DEFAULT_OPENAI_MODEL
 IMAGE_NAME = os.getenv("IMAGE_NAME") or os.getenv("LOCAL_IMAGE_NAME") or "openenv-price_negotiation"
-ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "https://huggingface.co/spaces/ViditOstwal/price_negotiation"
+ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "https://viditostwal-price-negotiation.hf.space"
 TASK_NAME = os.getenv("TASK_NAME") or "price-negotiation"
 BENCHMARK = os.getenv("BENCHMARK") or "price_negotiation"
 TEMPERATURE = float(os.getenv("BUYER_TEMPERATURE") or "0.7")
@@ -160,17 +162,17 @@ def _docker_env_vars() -> dict[str, str]:
 
 
 async def _connect_env():
-    if IMAGE_NAME:
-        debug_print(f"[DEBUG] starting docker image: {IMAGE_NAME}")
-        # debug_print(f"[DEBUG] docker env vars: {_docker_env_vars()}")
-        env = await PriceNegotiationEnv.from_docker_image(
-            IMAGE_NAME,
-            env_vars=_docker_env_vars(),
-        )
-        debug_print("[DEBUG] docker container reported ready; waiting 10s before use")
-        await asyncio.sleep(10)
-        debug_print("[DEBUG] docker-backed env client ready")
-        return env
+    # if IMAGE_NAME:
+    #     debug_print(f"[DEBUG] starting docker image: {IMAGE_NAME}")
+    #     # debug_print(f"[DEBUG] docker env vars: {_docker_env_vars()}")
+    #     env = await PriceNegotiationEnv.from_docker_image(
+    #         IMAGE_NAME,
+    #         env_vars=_docker_env_vars(),
+    #     )
+    #     debug_print("[DEBUG] docker container reported ready; waiting 10s before use")
+    #     await asyncio.sleep(10)
+    #     debug_print("[DEBUG] docker-backed env client ready")
+    #     return env
     debug_print(f"[DEBUG] connecting to running env at: {ENV_BASE_URL}")
     env = PriceNegotiationEnv(base_url=ENV_BASE_URL)
     await env.connect()
@@ -187,89 +189,95 @@ async def main() -> None:
     reward_breakdown_score = None
     task_id = args.id or args.difficulty or TASK_NAME
 
-    log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
+    
 
-    try:
-        debug_print("[DEBUG] entering main rollout try block")
-        env = await _connect_env()
-        debug_print("[DEBUG] env connection object created")
-        debug_print(f"[DEBUG] env={env}")
-        debug_print("[DEBUG] env connected")
-        reset_result = await env.reset(
-            difficulty=args.difficulty
-        )
-        debug_print(f"[DEBUG] reset_result={reset_result}")
-        state = await env.state()
-        debug_print(f"[DEBUG] state={state}")
-        debug_print(
-            f"[DEBUG] reset complete: episode_id={state.episode_id} step_count={state.step_count}"
-        )
-        debug_print(f"[DEBUG] requested difficulty={args.difficulty}")
-        debug_print(
-            f"[DEBUG] sampled product: {state.product_info.get('product', {}).get('name', 'unknown')}"
-        )
-        trajectory_steps: list[TrajectoryStep] = []
-        turn_limit = state.product_info.get("metadata", {}).get("max_turns")
-        debug_print(f"[DEBUG] turn_limit={turn_limit}")
+    for task in ['easy', 'medium', 'hard']:
+        task_id = task
+        diff = task
 
-        while True:
-            if turn_limit is not None and state.step_count >= turn_limit:
-                debug_print("[DEBUG] stopping rollout: reached turn limit")
-                break
+        log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
-            step_number = state.step_count + 1
+        try:
+            debug_print("[DEBUG] entering main rollout try block")
+            env = await _connect_env()
+            debug_print("[DEBUG] env connection object created")
+            debug_print(f"[DEBUG] env={env}")
+            debug_print("[DEBUG] env connected")
+            reset_result = await env.reset(
+                difficulty=diff
+            )
+            debug_print(f"[DEBUG] reset_result={reset_result}")
+            state = await env.state()
+            debug_print(f"[DEBUG] state={state}")
+            debug_print(
+                f"[DEBUG] reset complete: episode_id={state.episode_id} step_count={state.step_count}"
+            )
+            debug_print(f"[DEBUG] requested difficulty={diff}")
+            debug_print(
+                f"[DEBUG] sampled product: {state.product_info.get('product', {}).get('name', 'unknown')}"
+            )
+            trajectory_steps: list[TrajectoryStep] = []
+            turn_limit = state.product_info.get("metadata", {}).get("max_turns")
+            debug_print(f"[DEBUG] turn_limit={turn_limit}")
 
-            try:
-                debug_print(f"[DEBUG] generating buyer response for step={step_number}")
-                buyer_response = _generate_buyer_response(state)
-                debug_print(f"[DEBUG] buyer response step={step_number}: {buyer_response}")
-                step_result = await env.step(PriceNegotiationAction(buyer_response=buyer_response))
-                state = await env.state()
-                seller_reply = latest_seller_reply(state)
-                done = bool(step_result.done)
-
-                trajectory_steps.append(TrajectoryStep(buyer_response=buyer_response,observation=step_result.observation,state=state.model_copy(deep=True),seller_reply=seller_reply))
-                trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
-                score = score_trajectory(trajectory)
-
-                rewards.append(score)
-                steps_taken = step_number
-
-                log_step(step=step_number,action=buyer_response,reward=score,done=done,error=None)
-                debug_print(f"[DEBUG] step={step_number} seller_reply={seller_reply}")
-                debug_print(f"[DEBUG] step={step_number} status={step_result.observation.deal_status} reward={score} done={done}")
-
-                if done:
-                    debug_print(f"[DEBUG] stopping rollout: env done at step={step_number}")
+            while True:
+                if turn_limit is not None and state.step_count >= turn_limit:
+                    debug_print("[DEBUG] stopping rollout: reached turn limit")
                     break
 
-            except Exception as exc:
-                error_message = str(exc) or "unknown-error"
-                debug_print(f"[DEBUG] step exception at step={step_number}: {error_message}")
-                rewards.append(0.0)
-                steps_taken = step_number
-                log_step(step=step_number,action=locals().get("buyer_response", ""),reward=0.0,done=True,error=error_message)
-                break
+                step_number = state.step_count + 1
 
-        trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
-        debug_print(f"[DEBUG] built trajectory with {len(trajectory_steps)} steps; computing reward")
-        reward_breakdown_score = reward_breakdown(trajectory)
-        score = score_trajectory(trajectory)
-        success = score >= SUCCESS_SCORE_THRESHOLD
-        debug_print(f"[DEBUG] final score={score} success={success}")
-    except Exception as exc:
-        debug_print(f"[DEBUG] outer exception: {exc}")
-        success = False
-    finally:
-        if env is not None:
-            try:
-                debug_print("[DEBUG] closing env")
-                await env.close()
-            except Exception as exc:
-                debug_print(f"[DEBUG] env.close() exception: {exc}")
-                pass
-        debug_print("[DEBUG] emitting final log line")
-        log_end(task=task_id, success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
+                try:
+                    debug_print(f"[DEBUG] generating buyer response for step={step_number}")
+                    buyer_response = _generate_buyer_response(state)
+                    debug_print(f"[DEBUG] buyer response step={step_number}: {buyer_response}")
+                    step_result = await env.step(PriceNegotiationAction(buyer_response=buyer_response))
+                    state = await env.state()
+                    seller_reply = latest_seller_reply(state)
+                    done = bool(step_result.done)
+
+                    trajectory_steps.append(TrajectoryStep(buyer_response=buyer_response,observation=step_result.observation,state=state.model_copy(deep=True),seller_reply=seller_reply))
+                    trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
+                    score = score_trajectory(trajectory)
+
+                    rewards.append(score)
+                    steps_taken = step_number
+
+                    log_step(step=step_number,action=buyer_response,reward=score,done=done,error=None)
+                    debug_print(f"[DEBUG] step={step_number} seller_reply={seller_reply}")
+                    debug_print(f"[DEBUG] step={step_number} status={step_result.observation.deal_status} reward={score} done={done}")
+
+                    if done:
+                        debug_print(f"[DEBUG] stopping rollout: env done at step={step_number}")
+                        break
+
+                except Exception as exc:
+                    error_message = str(exc) or "unknown-error"
+                    debug_print(f"[DEBUG] step exception at step={step_number}: {error_message}")
+                    rewards.append(0.0)
+                    steps_taken = step_number
+                    log_step(step=step_number,action=locals().get("buyer_response", ""),reward=0.0,done=True,error=error_message)
+                    break
+
+            trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
+            debug_print(f"[DEBUG] built trajectory with {len(trajectory_steps)} steps; computing reward")
+            reward_breakdown_score = reward_breakdown(trajectory)
+            score = score_trajectory(trajectory)
+            success = score >= SUCCESS_SCORE_THRESHOLD
+            debug_print(f"[DEBUG] final score={score} success={success}")
+        except Exception as exc:
+            debug_print(f"[DEBUG] outer exception: {exc}")
+            success = False
+        finally:
+            if env is not None:
+                try:
+                    debug_print("[DEBUG] closing env")
+                    await env.close()
+                except Exception as exc:
+                    debug_print(f"[DEBUG] env.close() exception: {exc}")
+                    pass
+            debug_print("[DEBUG] emitting final log line")
+            log_end(task=task_id, success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
 
 
 if __name__ == "__main__":
