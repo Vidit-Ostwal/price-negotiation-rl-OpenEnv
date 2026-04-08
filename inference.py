@@ -81,6 +81,10 @@ def parse_args() -> argparse.Namespace:
     """Parse CLI arguments for inference."""
     parser = argparse.ArgumentParser(description="Run a price negotiation rollout.")
     parser.add_argument(
+        "--id",
+        help="Task or episode identifier to include in logs and forward on reset.",
+    )
+    parser.add_argument(
         "-d",
         "--difficulty",
         choices=("easy", "medium", "hard"),
@@ -181,9 +185,9 @@ async def main() -> None:
     score = 0.0
     success = False
     reward_breakdown_score = None
+    task_id = args.id or args.difficulty or TASK_NAME
 
-
-    log_start(task=args.id, env=BENCHMARK, model=MODEL_NAME)
+    log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
     try:
         debug_print("[DEBUG] entering main rollout try block")
@@ -191,7 +195,9 @@ async def main() -> None:
         debug_print("[DEBUG] env connection object created")
         debug_print(f"[DEBUG] env={env}")
         debug_print("[DEBUG] env connected")
-        reset_result = await env.reset(difficulty=args.difficulty)
+        reset_result = await env.reset(
+            difficulty=args.difficulty
+        )
         debug_print(f"[DEBUG] reset_result={reset_result}")
         state = await env.state()
         debug_print(f"[DEBUG] state={state}")
@@ -263,7 +269,7 @@ async def main() -> None:
                 debug_print(f"[DEBUG] env.close() exception: {exc}")
                 pass
         debug_print("[DEBUG] emitting final log line")
-        log_end(task=args.id, success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
+        log_end(task=task_id, success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
 
 
 if __name__ == "__main__":
