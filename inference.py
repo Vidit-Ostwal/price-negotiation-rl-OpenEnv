@@ -108,14 +108,14 @@ def log_step(
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
+def log_end(task: str, success: bool, steps: int, score: float, rewards: list[float]) -> None:
     try:
         rewards_str = json.dumps(rewards, separators=(",", ":"))
     except TypeError:
         rewards_str = str(rewards)
 
     print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
+        f"[END] task={task} success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}",
         flush=True,
     )
 
@@ -182,7 +182,8 @@ async def main() -> None:
     success = False
     reward_breakdown_score = None
 
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
+
+    log_start(task=args.id, env=BENCHMARK, model=MODEL_NAME)
 
     try:
         debug_print("[DEBUG] entering main rollout try block")
@@ -262,7 +263,7 @@ async def main() -> None:
                 debug_print(f"[DEBUG] env.close() exception: {exc}")
                 pass
         debug_print("[DEBUG] emitting final log line")
-        log_end(success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
+        log_end(task=args.id, success=success, steps=steps_taken, score=score, rewards=reward_breakdown_score)
 
 
 if __name__ == "__main__":

@@ -5,15 +5,18 @@ runtime: fastapi
 app: server.app:app
 port: 8000
 tasks:
-  - difficulty: easy
+  - id: easy
+    difficulty: easy
     grader:
       type: llm
       prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
-  - difficulty: medium
+  - id: medium
+    difficulty: medium
     grader:
       type: llm
       prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
-  - difficulty: hard
+  - id: hard
+    difficulty: hard
     grader:
       type: llm
       prompt_template: "Score the negotiation trajectory 0.0 to 1.0..."
