@@ -4,7 +4,35 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Price Negotiation Environment Client."""
+"""Price Negotiation Environment Client.
+
+This module exposes ``PriceNegotiationEnv``, the typed Python client for the
+price negotiation server.  It extends the generic OpenEnv ``EnvClient`` with
+three concrete methods that handle serialisation and deserialisation of the
+domain-specific action, observation, and state types.
+
+Typical usage
+-------------
+Synchronous (blocking) style::
+
+    from price_negotiation import PriceNegotiationAction, PriceNegotiationEnv
+
+    with PriceNegotiationEnv(base_url="http://localhost:8000").sync() as env:
+        reset_result = env.reset(difficulty="easy")
+        step_result  = env.step(
+            PriceNegotiationAction(
+                buyer_response="I can do $450. <action>OFFER $450</action>"
+            )
+        )
+        state = env.state()
+
+Asynchronous style::
+
+    async with PriceNegotiationEnv(base_url="http://localhost:8000") as env:
+        reset_result = await env.reset()
+        step_result  = await env.step(PriceNegotiationAction(buyer_response="..."))
+        state        = await env.state()
+"""
 
 from typing import Dict
 
@@ -25,55 +53,81 @@ class PriceNegotiationEnv(
         PriceNegotiationState,
     ]
 ):
-    """
-    Client for the Price Negotiation Environment.
+    """Typed client for the Price Negotiation Environment server.
 
-    This client maintains a persistent WebSocket connection to the environment server,
-    enabling efficient multi-step interactions with lower latency.
-    Each client instance has its own dedicated environment session on the server.
+    Wraps the generic ``EnvClient`` WebSocket/HTTP transport with
+    domain-specific serialisation logic for the three negotiation types:
+    ``PriceNegotiationAction``, ``PriceNegotiationObservation``, and
+    ``PriceNegotiationState``.
 
-    Example:
-        >>> # Connect to a running server
-        >>> with PriceNegotiationEnv(base_url="http://localhost:8000") as client:
-        ...     result = client.reset()
-        ...     print(result.observation.echoed_message)
+    Each client instance maintains its own persistent WebSocket connection to
+    the server, giving it a dedicated environment session with isolated state.
+    This means multiple clients can run concurrent episodes against the same
+    server without interfering with each other (provided the server was started
+    with ``max_concurrent_envs > 1``).
+
+    The client can be used as an async context manager (default) or wrapped
+    with ``.sync()`` for blocking usage in non-async code.
+
+    Example — synchronous:
+        >>> with PriceNegotiationEnv(base_url="http://localhost:8000").sync() as env:
+        ...     reset_result = env.reset(difficulty="easy")
+        ...     print(reset_result.observation.deal_status)   # "ONGOING"
         ...
-        ...     result = client.step(PriceNegotiationAction(message="Hello!"))
-        ...     print(result.observation.echoed_message)
+        ...     step_result = env.step(
+        ...         PriceNegotiationAction(
+        ...             buyer_response="I'd offer $450. <action>OFFER $450</action>"
+        ...         )
+        ...     )
+        ...     print(step_result.observation.deal_status)    # "ONGOING" or terminal
+        ...     state = env.state()
+        ...     print(state.product_info["product"]["name"])
 
-    Example with Docker:
-        >>> # Automatically start container and connect
+    Example — Docker-backed (starts container automatically):
         >>> client = PriceNegotiationEnv.from_docker_image("price_negotiation-env:latest")
         >>> try:
         ...     result = client.reset()
-        ...     result = client.step(PriceNegotiationAction(message="Test"))
+        ...     result = client.step(
+        ...         PriceNegotiationAction(buyer_response="<action>WALK</action>")
+        ...     )
         ... finally:
         ...     client.close()
     """
 
     def _step_payload(self, action: PriceNegotiationAction) -> Dict:
-        """
-        Convert PriceNegotiationAction to JSON payload for step message.
+        """Serialise a ``PriceNegotiationAction`` into a JSON-ready dict.
+
+        Called by the base ``EnvClient`` before sending a ``step`` message over
+        the WebSocket.  Only the fields that the server's ``/step`` endpoint
+        expects are included.
 
         Args:
-            action: PriceNegotiationAction instance
+            action: The buyer's next negotiation move.
 
         Returns:
-            Dictionary representation suitable for JSON encoding
+            A dict with a single key ``"buyer_response"`` containing the
+            buyer's natural-language text (including any action tag).
         """
         return {
             "buyer_response": action.buyer_response,
         }
 
     def _parse_result(self, payload: Dict) -> StepResult[PriceNegotiationObservation]:
-        """
-        Parse server response into StepResult[PriceNegotiationObservation].
+        """Deserialise a server step-response into a typed ``StepResult``.
+
+        Called by the base ``EnvClient`` after receiving the server's JSON
+        response to a ``step`` message.  The server wraps the observation
+        fields inside an ``"observation"`` sub-dict, while ``"done"`` and
+        ``"reward"`` live at the top level.
 
         Args:
-            payload: JSON response data from server
+            payload: Raw JSON dict returned by the server for a step request.
+                Expected keys: ``"observation"`` (dict), ``"done"`` (bool),
+                ``"reward"`` (float | None).
 
         Returns:
-            StepResult with PriceNegotiationObservation
+            A ``StepResult[PriceNegotiationObservation]`` with the parsed
+            observation, reward, and done flag.
         """
         obs_data = payload.get("observation", {})
         observation = PriceNegotiationObservation(
@@ -91,14 +145,22 @@ class PriceNegotiationEnv(
         )
 
     def _parse_state(self, payload: Dict) -> PriceNegotiationState:
-        """
-        Parse server response into PriceNegotiationState object.
+        """Deserialise a server state-response into a typed ``PriceNegotiationState``.
+
+        Called by the base ``EnvClient`` after receiving the server's JSON
+        response to a ``GET /state`` request.  All fields default to safe
+        empty values so that callers can safely access them even if the server
+        omits optional keys.
 
         Args:
-            payload: JSON response from state request
+            payload: Raw JSON dict returned by the server for a state request.
+                Expected keys: ``"episode_id"`` (str | None),
+                ``"step_count"`` (int), ``"product_info"`` (dict),
+                ``"buyer_messages"`` (list), ``"seller_messages"`` (list).
 
         Returns:
-            PriceNegotiationState object with negotiation context
+            A fully populated ``PriceNegotiationState`` reflecting the current
+            server-side episode context.
         """
         return PriceNegotiationState(
             episode_id=payload.get("episode_id"),
