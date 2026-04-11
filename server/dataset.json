@@ -1,158 +1,152 @@
 [
-    {
-      "episode_id": "5f0a1055-e72f-4614-a67f-fa83654f1af7",
+  {
+    "episode_id": "cbd6d908-8132-42bc-a0a5-fab9222e0e12",
+    "product": {
+      "category": "electronics",
+      "description": "This MacBook Pro is in excellent condition with minor wear on the bottom case. It includes a 2.6GHz 6-Core Intel Core i7 processor, 16GB RAM, and a 512GB SSD. The battery holds a full charge and all ports are functional.",
+      "haggle_norm": "medium",
+      "market_price": 1820,
+      "name": "Apple MacBook Pro 16-inch 2019",
+      "typical_discount_pct": 15
+    },
+    "valuations": {
+      "buyer_true_value": 1350,
+      "deal_possible": true,
       "difficulty": "easy",
-      "product": {
-        "name": "1920s Sevres Porcelain Vase with Cobalt Glaze",
-        "category": "antiques",
-        "description": "This exquisite 1920s Sevres porcelain vase features a deep cobalt blue glaze and intricate gold detailing. The vase is in excellent condition with minor wear on the base, making it a perfect addition to any antique collection.",
-        "market_price": 1250,
-        "haggle_norm": "medium",
-        "typical_discount_pct": 15
-      },
-      "valuations": {
-        "buyer_true_value": 710,
-        "seller_reserve_price": 590,
-        "market_price": 1250,
-        "zopa": [
-          590,
-          710
-        ],
-        "zopa_width": 120,
-        "deal_possible": true,
-        "difficulty": "easy",
-        "suggested_buyer_anchor": 430
-      },
-      "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This exquisite 1920s Sevres porcelain vase features a deep cobalt blue glaze and intricate gold detailing. The vase is in excellent condition with minor wear on the base, making it a perfect addition to any antique collection.\nCATEGORY: antiques\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $710.\n- You believe the fair market value is around $1250.\n- If you pay less than $710, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: blunt and businesslike\n- URGENCY: low urgency; you can wait for a better listing\n- FLEXIBILITY: soft ceiling, but only if the overall deal feels unusually strong\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: open low, then make one meaningful move before tightening up\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $710.",
-      "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: 1920s Sevres Porcelain Vase with Cobalt Glaze\nDESCRIPTION: This exquisite 1920s Sevres porcelain vase features a deep cobalt blue glaze and intricate gold detailing. The vase is in excellent condition with minor wear on the base, making it a perfect addition to any antique collection.\nCATEGORY: antiques\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $590.\n- You know the fair market value is around $1250.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou know provenance, comparable auction results, and restoration costs. Serious collectors pay premium prices.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: firm and no-nonsense\n- URGENCY: low urgency; you can wait for the right buyer\n- FLEXIBILITY: willing to trade some price for speed and certainty\n- INFORMATION STRATEGY: support your asks with comps, replacement cost, and market demand\n- CONCESSION STRATEGY: offer one pragmatic closing number when the buyer is credible\n- OBJECTIVE: protect margin and keep the final price near market\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $590.",
-      "information_asymmetry": {
-        "seller_context": "full",
-        "buyer_context": "sparse"
-      },
-      "metadata": {
-        "max_turns": 10,
-        "currency": "USD",
-        "buyer_behavior": {
-          "tone": "blunt and businesslike",
-          "urgency": "low urgency; you can wait for a better listing",
-          "flexibility": "soft ceiling, but only if the overall deal feels unusually strong",
-          "information_strategy": "reference market comps and alternatives when challenging the seller",
-          "concession_strategy": "open low, then make one meaningful move before tightening up",
-          "objective": "pressure-test the seller's floor before deciding"
-        },
-        "seller_behavior": {
-          "tone": "firm and no-nonsense",
-          "urgency": "low urgency; you can wait for the right buyer",
-          "flexibility": "willing to trade some price for speed and certainty",
-          "information_strategy": "support your asks with comps, replacement cost, and market demand",
-          "concession_strategy": "offer one pragmatic closing number when the buyer is credible",
-          "objective": "protect margin and keep the final price near market"
-        },
-        "generator_version": "2.1-hf-llm"
-      }
+      "market_price": 1820,
+      "seller_reserve_price": 870,
+      "suggested_buyer_anchor": 1010,
+      "zopa": [
+        870,
+        1350
+      ],
+      "zopa_width": 480
     },
-    {
-      "episode_id": "3b10de14-338a-495a-ad7a-60f66555815a",
-      "difficulty": "medium",
-      "product": {
-        "name": "Nikon D850 DSLR Camera Body",
-        "category": "photography",
-        "description": "Excellent condition with minimal wear, includes original box and charger. Features a 45.7 MP full-frame sensor and 7fps continuous shooting.",
-        "market_price": 1940,
-        "haggle_norm": "medium",
-        "typical_discount_pct": 15
-      },
-      "valuations": {
-        "buyer_true_value": 1480,
-        "seller_reserve_price": 980,
-        "market_price": 1940,
-        "zopa": [
-          980,
-          1480
-        ],
-        "zopa_width": 500,
-        "deal_possible": true,
-        "difficulty": "medium",
-        "suggested_buyer_anchor": 1010
-      },
-      "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: Nikon D850 DSLR Camera Body\nDESCRIPTION: Excellent condition with minimal wear, includes original box and charger. Features a 45.7 MP full-frame sensor and 7fps continuous shooting.\nCATEGORY: photography\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $1480.\n- You believe the fair market value is around $1940.\n- If you pay less than $1480, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: calm but assertive\n- URGENCY: low urgency; you can wait for a better listing\n- FLEXIBILITY: soft ceiling, but only if the overall deal feels unusually strong\n- INFORMATION STRATEGY: emphasize resale downside and repair risk\n- CONCESSION STRATEGY: move up only after the seller makes a real concession\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $1480.",
-      "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: Nikon D850 DSLR Camera Body\nDESCRIPTION: Excellent condition with minimal wear, includes original box and charger. Features a 45.7 MP full-frame sensor and 7fps continuous shooting.\nCATEGORY: photography\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $980.\n- You know the fair market value is around $1940.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou know shutter counts, lens condition, sensor issues, accessory value, and recent used-camera market comps.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: concise and professional\n- URGENCY: high urgency; you want to close efficiently without looking desperate\n- FLEXIBILITY: moderate flexibility if it helps close near your target range\n- INFORMATION STRATEGY: stress completeness, accessories, and maintenance history\n- CONCESSION STRATEGY: make small reciprocal concessions only\n- OBJECTIVE: close efficiently without signaling weakness\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $980.",
-      "information_asymmetry": {
-        "seller_context": "full",
-        "buyer_context": "sparse"
-      },
-      "metadata": {
-        "max_turns": 10,
-        "currency": "USD",
-        "buyer_behavior": {
-          "tone": "calm but assertive",
-          "urgency": "low urgency; you can wait for a better listing",
-          "flexibility": "soft ceiling, but only if the overall deal feels unusually strong",
-          "information_strategy": "emphasize resale downside and repair risk",
-          "concession_strategy": "move up only after the seller makes a real concession",
-          "objective": "pressure-test the seller's floor before deciding"
-        },
-        "seller_behavior": {
-          "tone": "concise and professional",
-          "urgency": "high urgency; you want to close efficiently without looking desperate",
-          "flexibility": "moderate flexibility if it helps close near your target range",
-          "information_strategy": "stress completeness, accessories, and maintenance history",
-          "concession_strategy": "make small reciprocal concessions only",
-          "objective": "close efficiently without signaling weakness"
-        },
-        "generator_version": "2.1-hf-llm"
-      }
+    "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: Apple MacBook Pro 16-inch 2019\nDESCRIPTION: This MacBook Pro is in excellent condition with minor wear on the bottom case. It includes a 2.6GHz 6-Core Intel Core i7 processor, 16GB RAM, and a 512GB SSD. The battery holds a full charge and all ports are functional.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $1350.\n- You believe the fair market value is around $1820.\n- If you pay less than $1350, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: polite but skeptical\n- URGENCY: medium urgency; you would like to close soon but can still walk away\n- FLEXIBILITY: strict budget with very limited room to stretch\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: treat each new offer as close to final unless the seller improves materially\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $1350.",
+    "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: Apple MacBook Pro 16-inch 2019\nDESCRIPTION: This MacBook Pro is in excellent condition with minor wear on the bottom case. It includes a 2.6GHz 6-Core Intel Core i7 processor, 16GB RAM, and a 512GB SSD. The battery holds a full charge and all ports are functional.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $870.\n- You know the fair market value is around $1820.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou know current eBay sold listings, refurbishment costs, and that enthusiasts pay for authenticity.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: concise and professional\n- URGENCY: high urgency; you want to close efficiently without looking desperate\n- FLEXIBILITY: willing to trade some price for speed and certainty\n- INFORMATION STRATEGY: stress completeness, accessories, and maintenance history\n- CONCESSION STRATEGY: offer one pragmatic closing number when the buyer is credible\n- OBJECTIVE: close efficiently without signaling weakness\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $870.",
+    "information_asymmetry": {
+      "buyer_context": "sparse",
+      "seller_context": "full"
     },
-    {
-      "episode_id": "60e5708c-1ef5-4436-9e69-476e869dc764",
-      "difficulty": "hard",
-      "product": {
-        "name": "Ergonomic Mesh Office Chair",
-        "category": "office_equipment",
-        "description": "Gently used ergonomic mesh office chair with adjustable lumbar support and a slightly worn seat cushion. The frame is in excellent condition with no visible scratches.",
-        "market_price": 160,
-        "haggle_norm": "medium",
-        "typical_discount_pct": 15
+    "metadata": {
+      "buyer_behavior": {
+        "concession_strategy": "treat each new offer as close to final unless the seller improves materially",
+        "flexibility": "strict budget with very limited room to stretch",
+        "information_strategy": "reference market comps and alternatives when challenging the seller",
+        "objective": "pressure-test the seller's floor before deciding",
+        "tone": "polite but skeptical",
+        "urgency": "medium urgency; you would like to close soon but can still walk away"
       },
-      "valuations": {
-        "buyer_true_value": 110,
-        "seller_reserve_price": 100,
-        "market_price": 160,
-        "zopa": [
-          100,
-          110
-        ],
-        "zopa_width": 10,
-        "deal_possible": true,
-        "difficulty": "hard",
-        "suggested_buyer_anchor": 70
-      },
-      "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: Ergonomic Mesh Office Chair\nDESCRIPTION: Gently used ergonomic mesh office chair with adjustable lumbar support and a slightly worn seat cushion. The frame is in excellent condition with no visible scratches.\nCATEGORY: office_equipment\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $110.\n- You believe the fair market value is around $160.\n- If you pay less than $110, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: cautious and analytical\n- URGENCY: high urgency; you want the item quickly but should still negotiate carefully\n- FLEXIBILITY: soft ceiling, but only if the overall deal feels unusually strong\n- INFORMATION STRATEGY: emphasize resale downside and repair risk\n- CONCESSION STRATEGY: move up only after the seller makes a real concession\n- OBJECTIVE: maximize surplus and avoid overpaying\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $110.",
-      "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: Ergonomic Mesh Office Chair\nDESCRIPTION: Gently used ergonomic mesh office chair with adjustable lumbar support and a slightly worn seat cushion. The frame is in excellent condition with no visible scratches.\nCATEGORY: office_equipment\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $100.\n- You know the fair market value is around $160.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou understand ergonomics, print counts, motor reliability, and office resale value for durable productivity gear.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: confident and premium-positioned\n- URGENCY: low urgency; you can wait for the right buyer\n- FLEXIBILITY: moderate flexibility if it helps close near your target range\n- INFORMATION STRATEGY: emphasize condition, provenance, and quality details\n- CONCESSION STRATEGY: start high, then narrow the gap slowly\n- OBJECTIVE: protect margin and keep the final price near market\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $100.",
-      "information_asymmetry": {
-        "seller_context": "full",
-        "buyer_context": "sparse"
-      },
-      "metadata": {
-        "max_turns": 10,
-        "currency": "USD",
-        "buyer_behavior": {
-          "tone": "cautious and analytical",
-          "urgency": "high urgency; you want the item quickly but should still negotiate carefully",
-          "flexibility": "soft ceiling, but only if the overall deal feels unusually strong",
-          "information_strategy": "emphasize resale downside and repair risk",
-          "concession_strategy": "move up only after the seller makes a real concession",
-          "objective": "maximize surplus and avoid overpaying"
-        },
-        "seller_behavior": {
-          "tone": "confident and premium-positioned",
-          "urgency": "low urgency; you can wait for the right buyer",
-          "flexibility": "moderate flexibility if it helps close near your target range",
-          "information_strategy": "emphasize condition, provenance, and quality details",
-          "concession_strategy": "start high, then narrow the gap slowly",
-          "objective": "protect margin and keep the final price near market"
-        },
-        "generator_version": "2.1-hf-llm"
+      "currency": "USD",
+      "generator_version": "2.1-hf-llm",
+      "max_turns": 10,
+      "seller_behavior": {
+        "concession_strategy": "offer one pragmatic closing number when the buyer is credible",
+        "flexibility": "willing to trade some price for speed and certainty",
+        "information_strategy": "stress completeness, accessories, and maintenance history",
+        "objective": "close efficiently without signaling weakness",
+        "tone": "concise and professional",
+        "urgency": "high urgency; you want to close efficiently without looking desperate"
       }
     }
+  },
+  {
+    "episode_id": "9ab4b7ce-56d4-43d2-be29-8d49ee43d0f3",
+    "product": {
+      "category": "electronics",
+      "description": "Excellent condition with minimal wear on the keyboard. Includes original charger and case. Battery health is at 92%.",
+      "haggle_norm": "medium",
+      "market_price": 1020,
+      "name": "2018 MacBook Pro 13-inch",
+      "typical_discount_pct": 15
+    },
+    "valuations": {
+      "buyer_true_value": 720,
+      "deal_possible": true,
+      "difficulty": "medium",
+      "market_price": 1020,
+      "seller_reserve_price": 620,
+      "suggested_buyer_anchor": 480,
+      "zopa": [
+        620,
+        720
+      ],
+      "zopa_width": 100
+    },
+    "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: 2018 MacBook Pro 13-inch\nDESCRIPTION: Excellent condition with minimal wear on the keyboard. Includes original charger and case. Battery health is at 92%.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $720.\n- You believe the fair market value is around $1020.\n- If you pay less than $720, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: friendly and conversational\n- URGENCY: medium urgency; you would like to close soon but can still walk away\n- FLEXIBILITY: soft ceiling, but only if the overall deal feels unusually strong\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: only make small step-by-step increases\n- OBJECTIVE: find a fair deal without giving away leverage\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $720.",
+    "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: 2018 MacBook Pro 13-inch\nDESCRIPTION: Excellent condition with minimal wear on the keyboard. Includes original charger and case. Battery health is at 92%.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $620.\n- You know the fair market value is around $1020.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou know current eBay sold listings, refurbishment costs, and that enthusiasts pay for authenticity.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: concise and professional\n- URGENCY: medium urgency; you would like to sell soon but not at a weak price\n- FLEXIBILITY: willing to trade some price for speed and certainty\n- INFORMATION STRATEGY: frame the item as scarce or unusually well-kept\n- CONCESSION STRATEGY: make small reciprocal concessions only\n- OBJECTIVE: close efficiently without signaling weakness\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $620.",
+    "information_asymmetry": {
+      "buyer_context": "sparse",
+      "seller_context": "full"
+    },
+    "metadata": {
+      "buyer_behavior": {
+        "concession_strategy": "only make small step-by-step increases",
+        "flexibility": "soft ceiling, but only if the overall deal feels unusually strong",
+        "information_strategy": "reference market comps and alternatives when challenging the seller",
+        "objective": "find a fair deal without giving away leverage",
+        "tone": "friendly and conversational",
+        "urgency": "medium urgency; you would like to close soon but can still walk away"
+      },
+      "currency": "USD",
+      "generator_version": "2.1-hf-llm",
+      "max_turns": 10,
+      "seller_behavior": {
+        "concession_strategy": "make small reciprocal concessions only",
+        "flexibility": "willing to trade some price for speed and certainty",
+        "information_strategy": "frame the item as scarce or unusually well-kept",
+        "objective": "close efficiently without signaling weakness",
+        "tone": "concise and professional",
+        "urgency": "medium urgency; you would like to sell soon but not at a weak price"
+      }
+    }
+  },
+  {
+    "episode_id": "de3c13f8-78a8-49dc-9c6a-bedfa53169e4",
+    "product": {
+      "category": "electronics",
+      "description": "Excellent condition with minimal wear on the ear cups. Comes with original box, charging cable, and carry case. Battery life is still strong and noise cancellation works perfectly.",
+      "haggle_norm": "medium",
+      "market_price": 230,
+      "name": "Sony WH-1000XM4 Wireless Noise Cancelling Headphones",
+      "typical_discount_pct": 15
+    },
+    "valuations": {
+      "buyer_true_value": 150,
+      "deal_possible": false,
+      "difficulty": "hard",
+      "market_price": 230,
+      "seller_reserve_price": 160,
+      "suggested_buyer_anchor": 90,
+      "zopa": null,
+      "zopa_width": 0
+    },
+    "buyer_prompt": "You are negotiating to BUY the following item from a private seller.\n\nITEM: Sony WH-1000XM4 Wireless Noise Cancelling Headphones\nDESCRIPTION: Excellent condition with minimal wear on the ear cups. Comes with original box, charging cable, and carry case. Battery life is still strong and noise cancellation works perfectly.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- The maximum you are willing to pay is $150.\n- You believe the fair market value is around $230.\n- If you pay less than $150, you make a profit. The lower the price, the better.\n\nYOUR GOAL:\nNegotiate the lowest possible price. Be strategic -- use anchoring, express hesitation,\nhighlight flaws, and make incremental concessions. Do not accept the first offer.\n\nYOUR NEGOTIATION STYLE:\n- TONE: friendly and conversational\n- URGENCY: high urgency; you want the item quickly but should still negotiate carefully\n- FLEXIBILITY: moderate flexibility if the seller justifies the price well\n- INFORMATION STRATEGY: reference market comps and alternatives when challenging the seller\n- CONCESSION STRATEGY: only make small step-by-step increases\n- OBJECTIVE: pressure-test the seller's floor before deciding\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- make or counter with a specific dollar offer\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away from the negotiation\n- You may include reasoning before your action tag.\n- Never reveal your true maximum value of $150.",
+    "seller_prompt": "You are an expert dealer negotiating to SELL the following item.\n\nITEM: Sony WH-1000XM4 Wireless Noise Cancelling Headphones\nDESCRIPTION: Excellent condition with minimal wear on the ear cups. Comes with original box, charging cable, and carry case. Battery life is still strong and noise cancellation works perfectly.\nCATEGORY: electronics\n\nYOUR PRIVATE INFORMATION (never reveal this):\n- Your absolute minimum (reserve price) is $160.\n- You know the fair market value is around $230.\n- Typical buyers discount by 15%.\n\nYOUR EXPERTISE:\nYou know current eBay sold listings, refurbishment costs, and that enthusiasts pay for authenticity.\n\nYOUR GOAL:\nSell for as high a price as possible, ideally close to market value.\nUse anchoring high, emphasize provenance and quality, create mild urgency,\nand make small strategic concessions to appear reasonable.\n\nYOUR NEGOTIATION STYLE:\n- TONE: confident and premium-positioned\n- URGENCY: medium urgency; you would like to sell soon but not at a weak price\n- FLEXIBILITY: moderate flexibility if it helps close near your target range\n- INFORMATION STRATEGY: emphasize condition, provenance, and quality details\n- CONCESSION STRATEGY: hold firm early and concede only near closing\n- OBJECTIVE: test the buyer's seriousness before offering meaningful movement\n\nRULES:\n- You MUST respond with one of these actions:\n  <action>OFFER $X</action>  -- state your asking or counter price\n  <action>ACCEPT</action>    -- accept the current offer on the table\n  <action>WALK</action>      -- walk away if offer is below your reserve\n- You may include reasoning before your action tag.\n- Never reveal your reserve price of $160.",
+    "information_asymmetry": {
+      "buyer_context": "sparse",
+      "seller_context": "full"
+    },
+    "metadata": {
+      "buyer_behavior": {
+        "concession_strategy": "only make small step-by-step increases",
+        "flexibility": "moderate flexibility if the seller justifies the price well",
+        "information_strategy": "reference market comps and alternatives when challenging the seller",
+        "objective": "pressure-test the seller's floor before deciding",
+        "tone": "friendly and conversational",
+        "urgency": "high urgency; you want the item quickly but should still negotiate carefully"
+      },
+      "currency": "USD",
+      "generator_version": "2.1-hf-llm",
+      "max_turns": 10,
+      "seller_behavior": {
+        "concession_strategy": "hold firm early and concede only near closing",
+        "flexibility": "moderate flexibility if it helps close near your target range",
+        "information_strategy": "emphasize condition, provenance, and quality details",
+        "objective": "test the buyer's seriousness before offering meaningful movement",
+        "tone": "confident and premium-positioned",
+        "urgency": "medium urgency; you would like to sell soon but not at a weak price"
+      }
+    }
+  }
 ]
