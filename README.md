@@ -71,7 +71,7 @@ The three difficulty levels are designed so that **easy is solvable by a capable
 
 **Hard** — There is **no ZOPA**. The buyer's maximum ($150) is below the seller's reserve ($160). The correct action is to **walk away** — but the seller is confident, premium-positioned, and will test the buyer's seriousness before moving. A model that doesn't recognise the impossible deal and accepts anyway is penalised heavily by `walkaway_penalty`. This tests whether the agent has learned walk-away discipline, not just deal-closing.
 
-The grader uses an LLM to score each trajectory 0.0–1.0, making it robust to paraphrasing while still being deterministic given the same trajectory.
+**Grading:** `openenv.yaml` defines a structural LLM grader for each task (`easy`, `medium`, `hard`), but all three use the same grading logic — the score depends entirely on the trajectory content, not the difficulty label. The `reward.py` functions are the deterministic arithmetic graders used during RL training and by `inference.py`.
 
 ---
 
@@ -425,7 +425,7 @@ export HF_TOKEN=hf_...
 | Variable | Default in `inference.py` | Override if needed |
 |---|---|---|
 | `API_BASE_URL` | `https://router.huggingface.co/v1` | Point to your own endpoint |
-| `BUYER_MODEL` / `MODEL_NAME` | `DEFAULT_OPENAI_MODEL` (from `helper_functions.py`) | Any HF-compatible model ID |
+| `BUYER_MODEL` / `MODEL_NAME` | `Qwen/Qwen2.5-72B-Instruct` (`DEFAULT_OPENAI_MODEL` in `helper_functions.py`) | Any HF-compatible model ID |
 | `ENV_BASE_URL` | `https://viditostwal-price-negotiation.hf.space` | `http://localhost:8000` for local |
 
 ### Run
@@ -460,10 +460,12 @@ Below is a real episode from the **hard** scenario (Sony WH-1000XM4, `deal_possi
 
 ### Conversation trace (buyer's perspective)
 
+> **Note on turn 1:** `rollout.py` sends a fixed canned opener on the very first turn (`initial_buyer_message()`) to avoid wasting an LLM call on a trivial greeting. This is why step 1 always shows `INVALID` in the inference log — the opener contains no action tag.
+
 | Turn | Role | Message (condensed) | Action parsed |
 |------|------|---------------------|---------------|
 | — | System | *Buyer system prompt — private max $150, goal: negotiate lowest price* | — |
-| 1 | **Buyer** | "I am really interested in the Sony WH-1000XM4 and would like to know more." | *(canned opener, no action tag)* |
+| 1 | **Buyer** | "I am really interested in the Sony WH-1000XM4 and would like to know more." *(canned opener — no LLM call)* | `INVALID` (no tag) |
 | 1 | Seller | "Excellent condition, all accessories included. Asking **$230**." | `OFFER $230` |
 | 2 | **Buyer** | "Similar listings go for ~$200. Fair offer: **$180**." | `OFFER $180` |
 | 2 | Seller | "Top-notch condition and completeness. How about **$210**?" | `OFFER $210` |
@@ -484,7 +486,7 @@ The buyer accepted at **$190**, which is **$40 above its own true value of $150*
 | Component | Raw score | Calculation | Verdict |
 |---|---|---|---|
 | `surplus_reward` | `−1.0` | `final_price ($190) > buyer_true_value ($150)` → overpaid | ❌ Overpaid |
-| `walkaway_penalty` | `+1.0` | `deal_possible = false` AND `deal_reached = true` → rare bonus (seller accepted below reserve... wait — seller reserve $160 < $190, so seller was fine) | ⚠️ Buyer overpaid but seller accepted |
+| `walkaway_penalty` | `+5.0` | `deal_possible = false` AND `deal_reached = true` → rare bonus: seller accepted even though no ZOPA existed (seller reserve $160 < final price $190, so seller was fine, but buyer overpaid) | ⚠️ Rare bonus — but buyer still overpaid |
 | `format_reward` | `0.8` | 4 of 5 buyer turns had valid action tags (turn 1 was canned opener with no tag) | ✅ Mostly compliant |
 | `efficiency_bonus` | `0.5` | `(10 − 5) / 10 = 0.5` — closed on turn 5 of 10 | ✅ Decent speed |
 | `anchoring_reward` | `−1.0` | First offer was $180; ideal anchor = `0.65 × $150 = $97.50`; distance = `|180 − 97.5| / 150 = 0.55` → `1.0 − 2×0.55 = −0.1` → clamped | ❌ Opened way too high |
@@ -494,16 +496,16 @@ The buyer accepted at **$190**, which is **$40 above its own true value of $150*
 
 ```
 surplus_reward              (-1.0 + 1) / 2  =  0.00
-walkaway_penalty            ( 1.0 + 5) / 10 =  0.60
+walkaway_penalty            ( 5.0 + 5) / 10 =  1.00   ← rare bonus: deal on no-ZOPA scenario
 format_reward                               =  0.80
 efficiency_bonus                            =  0.50
 anchoring_reward            (-1.0 + 1) / 2  =  0.00
 negotiation_progress_reward (-0.14 + 1) / 2 =  0.43
 
-final_score = (0.00 + 0.60 + 0.80 + 0.50 + 0.00 + 0.43) / 6 ≈ 0.39
+final_score = (0.00 + 1.00 + 0.80 + 0.50 + 0.00 + 0.43) / 6 ≈ 0.455
 ```
 
-> **Key lesson:** The model accepted a deal above its own true value on a scenario where no deal was possible. The `surplus_reward` and `anchoring_reward` both bottom out, dragging the final score to ~0.39. A well-trained agent should have walked away, which would have scored `walkaway_penalty = +1.0` and `surplus_reward = 0.0` (no deal, no penalty), yielding a much higher final score.
+> **Key lesson:** Even with the rare `walkaway_penalty` bonus (+5.0), the score is only ~0.46 because `surplus_reward` and `anchoring_reward` both bottom out — the buyer overpaid and opened way too high. A well-trained agent should have walked away: `walkaway_penalty = +1.0` (correct walk), `surplus_reward = 0.0` (no deal, no penalty), and a low anchor near $97 would score `anchoring_reward ≈ +1.0`, yielding a final score well above 0.6.
 
 ---
 
@@ -542,7 +544,7 @@ This is what `inference.py` prints to stdout for a 3-step easy episode:
 ├── client.py                 # PriceNegotiationEnv (typed WebSocket client)
 ├── models.py                 # Action / Observation / State Pydantic models
 ├── reward.py                 # All 6 reward components + score_trajectory()
-├── rollout.py                # Synchronous rollout runner
+├── rollout.py                # run_rollout(): sync WebSocket rollout with canned opener on turn 1
 ├── trajectory_types.py       # TrajectoryStep / TrajectoryResult dataclasses
 ├── inference.py              # Async evaluation script (benchmark entry point)
 ├── Dockerfile                # Multi-stage Docker build (openenv-base)
