@@ -259,6 +259,7 @@ async def main() -> None:
                     log_step(step=step_number,action=locals().get("buyer_response", ""),reward=0.0,done=True,error=error_message)
                     break
 
+            debug_print(f"[DEBUG] Final State: {[state]}")
             trajectory = _build_trajectory(initial_observation=reset_result.observation,final_state=state,steps=trajectory_steps)
             debug_print(f"[DEBUG] built trajectory with {len(trajectory_steps)} steps; computing reward")
             reward_breakdown_score = reward_breakdown(trajectory)
