@@ -305,7 +305,9 @@ docker build -t price_negotiation-env:latest -f Dockerfile .
 
 ### Baseline script
 
-`inference.py` is the baseline script. Given the same `HF_TOKEN`, `BUYER_MODEL`, and `ENV_BASE_URL`, it runs one episode per difficulty and prints `[START]` / `[STEP]` / `[END]` lines with the full `reward_breakdown` dict. Scores are reproducible to within LLM sampling variance (set `BUYER_TEMPERATURE=0` for fully deterministic buyer outputs).
+`inference.py` is the baseline script. Given the same `HF_TOKEN`, `BUYER_MODEL`, and `ENV_BASE_URL`, it runs one episode per difficulty and prints `[START]` / `[STEP]` / `[END]` lines with the full `reward_breakdown` dict.
+
+**Scores are not exactly reproducible across runs.** The reward functions in `reward.py` are pure Python arithmetic and always produce the same output for the same trajectory — but the trajectory itself is LLM-driven on both sides (buyer and seller). Every new run on the same scenario produces a different conversation, and therefore a different score. This is intentional: diverse trajectories give the RL policy a richer reward signal and broader exploration of the strategy space across training iterations.
 
 ---
 
@@ -431,6 +433,12 @@ uv run python inference.py -d hard
 [STEP]  step=3 action=('OFFER', 1500.0)   reward=0.57 done=true  error=null
 [END]   task=easy success=true steps=3 score=0.572 rewards={"surplus_reward":-1.0,"walkaway_penalty":1.0,"format_reward":0.667,"efficiency_bonus":0.7,"anchoring_reward":0.226,"negotiation_progress_reward":0.704}
 ```
+
+**Two important notes on the output:**
+
+1. **`reward` in `[STEP]` lines is not a step-level environment reward.** The environment always returns `reward=0.0` during the episode. The value shown is `score_trajectory()` computed on the partial trajectory up to that step — it is a running estimate that updates as the episode progresses, not a signal from the environment.
+
+2. **Scores vary across runs.** The grader (`reward.py`) is pure Python arithmetic and is fully deterministic given the same trajectory. However, the trajectory is LLM-driven on both sides — the buyer agent and the seller LLM both sample stochastically. Every new run on the same scenario produces a different conversation and therefore a different score. This is a feature, not a bug: diverse trajectories give the RL policy a richer reward signal and broader exploration of the strategy space.
 
 > **Note on step 1:** `rollout.py` sends a fixed canned opener on the very first turn (`initial_buyer_message()`) to avoid wasting an LLM call on a trivial greeting. This is why step 1 always shows `INVALID` — the opener contains no action tag.
 
