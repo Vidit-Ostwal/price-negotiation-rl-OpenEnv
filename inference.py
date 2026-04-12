@@ -59,7 +59,7 @@ if str(PACKAGE_PARENT) not in sys.path:
     sys.path.insert(0, str(PACKAGE_PARENT))
 
 from price_negotiation import PriceNegotiationAction, PriceNegotiationEnv
-from price_negotiation.reward import reward_breakdown, score_trajectory
+from price_negotiation.reward import reward_breakdown, score_trajectory, _parse_action
 from price_negotiation.rollout import initial_buyer_message, latest_seller_reply
 from price_negotiation.server.helper_functions import DEFAULT_OPENAI_MODEL, get_openai_response
 from price_negotiation.trajectory_types import TrajectoryResult, TrajectoryStep
@@ -109,7 +109,7 @@ def log_step(
     error_val = error if error else "null"
     done_val = str(done).lower()
     print(
-        f"[STEP] step={step} action={action[:10]} reward={reward:.2f} done={done_val} error={error_val}",
+        f"[STEP] step={step} action={_parse_action(action)} reward={reward:.2f} done={done_val} error={error_val}",
         flush=True,
     )
 
