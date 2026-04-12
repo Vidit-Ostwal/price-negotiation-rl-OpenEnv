@@ -75,7 +75,7 @@ ENV_BASE_URL = os.getenv("ENV_BASE_URL") or "https://viditostwal-price-negotiati
 TASK_NAME = os.getenv("TASK_NAME") or "price-negotiation"
 BENCHMARK = os.getenv("BENCHMARK") or "price_negotiation"
 TEMPERATURE = float(os.getenv("BUYER_TEMPERATURE") or "0.7")
-SUCCESS_SCORE_THRESHOLD = float(os.getenv("SUCCESS_SCORE_THRESHOLD") or "0.0")
+SUCCESS_SCORE_THRESHOLD = float(os.getenv("SUCCESS_SCORE_THRESHOLD") or "0.4")
 DEBUG = os.getenv("DEBUG", "").lower() in {"1", "true", "yes", "on"}
 
 

@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 # ---------------------------------------------------------------------------
 
 # Default model used for both buyer and seller when no override is provided.
-DEFAULT_OPENAI_MODEL = "Qwen/Qwen2.5-72B-Instruct"
+DEFAULT_OPENAI_MODEL = "Qwen/Qwen2.5-3B-Instruct"
 
 # API key resolved from the environment.  API_KEY takes precedence; HF_TOKEN
 # is accepted as a convenience alias for Hugging Face-hosted deployments.

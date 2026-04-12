@@ -396,7 +396,7 @@ All behaviour is controlled via environment variables — no code changes needed
 | `BUYER_MODEL` / `MODEL_NAME` | Model used by `inference.py` for buyer turns | `Qwen/Qwen2.5-72B-Instruct` |
 | `ENV_BASE_URL` | Server URL used by `inference.py` | HF Space URL |
 | `BUYER_TEMPERATURE` | Sampling temperature for buyer LLM | `0.7` |
-| `SUCCESS_SCORE_THRESHOLD` | Minimum `score_trajectory` to count as success | `0.0` |
+| `SUCCESS_SCORE_THRESHOLD` | Minimum `score_trajectory` to count as success | `0.4` |
 | `DEBUG` | Set to `1` / `true` to enable verbose debug logs | `false` |
 
 **Minimal setup (HF token only):**
