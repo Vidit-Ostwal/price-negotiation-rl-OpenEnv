@@ -15,6 +15,11 @@ tags:
 
 An [OpenEnv](https://github.com/meta-pytorch/OpenEnv) RL environment where an LLM agent plays the **buyer** and negotiates against an LLM-powered **seller** over real marketplace listings. The server exposes standard OpenEnv HTTP and WebSocket endpoints and is pre-configured for Hugging Face Spaces deployment.
 
+| | Link |
+|---|---|
+| 🤗 HF Space | [ViditOstwal/price_negotiation](https://huggingface.co/spaces/ViditOstwal/price_negotiation) |
+| 🌐 Web UI | [viditostwal-price-negotiation.hf.space/web](https://viditostwal-price-negotiation.hf.space/web/) |
+
 ---
 
 ## 🌍 Real-World Utility
