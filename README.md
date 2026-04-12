@@ -422,10 +422,6 @@ export API_BASE_URL="https://router.huggingface.co/v1"
 ```bash
 # Run all three difficulties
 uv run python inference.py
-
-# Run a single difficulty
-uv run python inference.py --difficulty easy
-uv run python inference.py -d hard
 ```
 
 ### stdout format
