@@ -6,7 +6,6 @@ colorTo: yellow
 sdk: docker
 pinned: false
 app_port: 8000
-base_path: /web
 tags:
   - openenv
 ---
@@ -18,7 +17,7 @@ An [OpenEnv](https://github.com/meta-pytorch/OpenEnv) RL environment where an LL
 | | Link |
 |---|---|
 | 🤗 HF Space | [ViditOstwal/price_negotiation](https://huggingface.co/spaces/ViditOstwal/price_negotiation) |
-| 🌐 Web UI | [viditostwal-price-negotiation.hf.space/web](https://viditostwal-price-negotiation.hf.space/web/) |
+| 🌐 Web UI | [viditostwal-price-negotiation.hf.space](https://viditostwal-price-negotiation.hf.space) |
 
 ---
 
