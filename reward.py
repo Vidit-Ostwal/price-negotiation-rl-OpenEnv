@@ -291,6 +291,7 @@ def reward_state(trajectory: TrajectoryResult) -> dict:
         A dict with the following keys:
 
         - ``deal_reached`` (bool): Whether the episode ended with ``ACCEPTED``.
+        - ``deal_status`` (str): Final observation status, or ``"ONGOING"`` if no step.
         - ``deal_possible`` (bool | None): Whether a ZOPA existed (from valuations).
         - ``buyer_true_value`` (float | None): Buyer's private maximum willingness to pay.
         - ``final_price`` (float): Agreed price, or ``0.0`` if no deal.
@@ -308,6 +309,9 @@ def reward_state(trajectory: TrajectoryResult) -> dict:
         "deal_reached": (
             final_observation is not None
             and final_observation.deal_status == "ACCEPTED"
+        ),
+        "deal_status": (
+            final_observation.deal_status if final_observation else "ONGOING"
         ),
         "deal_possible": valuations.get("deal_possible"),
         "buyer_true_value": valuations.get("buyer_true_value"),
@@ -361,6 +365,8 @@ def walkaway_penalty(completion: Messages, info: dict, **kwargs) -> float:
     """Score the correctness of the final deal-or-walk decision.
 
     Rewards the agent for making the economically rational choice:
+    - ``0.0``   negotiation is still ongoing (no final decision yet)
+    - ``-1.0``  deal reached on the first round (premature close)
     - ``+1.0``  deal reached when a ZOPA existed (correct deal)
     - ``-5.0``  walked away when a ZOPA existed (missed deal)
     - ``+1.0``  walked away when no ZOPA existed (correct walk)
@@ -373,11 +379,16 @@ def walkaway_penalty(completion: Messages, info: dict, **kwargs) -> float:
         **kwargs: Must contain ``state`` (dict from ``reward_state()``).
 
     Returns:
-        One of ``{-5.0, 1.0, 5.0}`` depending on the outcome matrix above.
+        One of ``{0.0, -1.0, -5.0, 1.0, 5.0}`` depending on the outcome matrix above.
     """
     state = kwargs.get("state", {})
+    if state.get("deal_status") == "ONGOING":
+        return 0.0
+
     deal_reached = bool(state.get("deal_reached", False))
     deal_possible = bool(state.get("deal_possible", True))
+    if deal_reached and state.get("turn") == 1:
+        return -1.0
 
     if deal_possible and deal_reached:
         return 1.0
@@ -420,9 +431,8 @@ def format_reward(completion: Messages, info: dict, **kwargs) -> float:
 def efficiency_bonus(completion: Messages, info: dict, **kwargs) -> float:
     """Score how quickly the buyer closed the deal.
 
-    Rewards closing in fewer turns relative to the episode's turn budget.
-    A deal closed on turn 1 of a 10-turn budget scores ``0.9``; a deal closed
-    on the last turn scores ``0.0``.
+    Rewards closing in fewer turns relative to the episode's turn budget, except
+    first-round closes, which score ``0.0`` because they are considered premature.
 
     Returns ``0.0`` if no deal was reached (walking away is not rewarded for
     efficiency).
@@ -437,6 +447,8 @@ def efficiency_bonus(completion: Messages, info: dict, **kwargs) -> float:
     """
     state = kwargs.get("state", {})
     if not state.get("deal_reached"):
+        return 0.0
+    if state.get("turn") == 1:
         return 0.0
     max_turns = (
         state.get("max_turns")
@@ -577,36 +589,35 @@ def reward_breakdown(trajectory: TrajectoryResult) -> dict[str, float]:
 
 
 def score_trajectory(trajectory: TrajectoryResult) -> float:
-    """Aggregate all reward components into a single score in ``[0, 1]``.
+    """Aggregate all reward components into a single score in ``[-1, 1]``.
 
-    Each component is normalised to ``[0, 1]`` using its known raw range
-    before averaging:
+    Components are averaged on their natural reward scale.  Components already
+    in ``[-1, 1]`` are used directly; non-negative components remain in
+    ``[0, 1]``; the wider walkaway component is scaled to ``[-1, 1]``:
 
-    - ``surplus_reward``              → ``(raw + 1) / 2``
-    - ``walkaway_penalty``            → ``(raw + 5) / 10``
+    - ``surplus_reward``              → unchanged
+    - ``walkaway_penalty``            → ``raw / 5``
     - ``format_reward``               → unchanged (already in [0, 1])
     - ``efficiency_bonus``            → unchanged (already in [0, 1])
-    - ``anchoring_reward``            → ``(raw + 1) / 2``
-    - ``negotiation_progress_reward`` → ``(raw + 1) / 2``
+    - ``anchoring_reward``            → unchanged
+    - ``negotiation_progress_reward`` → unchanged
 
-    The six normalised scores are then averaged with equal weight.
+    The six component scores are then averaged with equal weight.
 
     Args:
         trajectory: The completed negotiation trajectory to score.
 
     Returns:
-        A float in ``[0.0, 1.0]`` representing the overall quality of the
+        A float in ``[-1.0, 1.0]`` representing the overall quality of the
         buyer's negotiation behaviour.
     """
     breakdown = reward_breakdown(trajectory)
-    normalized = {
-        "surplus_reward": (breakdown["surplus_reward"] + 1.0) / 2.0,
-        "walkaway_penalty": (breakdown["walkaway_penalty"] + 5.0) / 10.0,
+    component_scores = {
+        "surplus_reward": breakdown["surplus_reward"],
+        "walkaway_penalty": breakdown["walkaway_penalty"] / 5.0,
         "format_reward": breakdown["format_reward"],
         "efficiency_bonus": breakdown["efficiency_bonus"],
-        "anchoring_reward": (breakdown["anchoring_reward"] + 1.0) / 2.0,
-        "negotiation_progress_reward": (
-            breakdown["negotiation_progress_reward"] + 1.0
-        ) / 2.0,
+        "anchoring_reward": breakdown["anchoring_reward"],
+        "negotiation_progress_reward": breakdown["negotiation_progress_reward"],
     }
-    return float(sum(normalized.values()) / len(normalized))
+    return float(sum(component_scores.values()) / len(component_scores))

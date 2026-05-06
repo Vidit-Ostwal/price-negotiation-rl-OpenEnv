@@ -18,6 +18,7 @@ An [OpenEnv](https://github.com/meta-pytorch/OpenEnv) RL environment where an LL
 |---|---|
 | 🤗 HF Space | [ViditOstwal/price_negotiation](https://huggingface.co/spaces/ViditOstwal/price_negotiation) |
 | 🌐 Web UI | [viditostwal-price-negotiation.hf.space](https://viditostwal-price-negotiation.hf.space) |
+| 🔗 GitHub | [Vidit-Ostwal/price-negotiation-rl-OpenEnv](https://github.com/Vidit-Ostwal/price-negotiation-rl-OpenEnv) |
 
 ---
 
@@ -89,6 +90,8 @@ The trajectory itself, however, is fully LLM-driven on **both sides** — the bu
 
 The server is a **FastAPI** app created by OpenEnv's `create_app()` factory (`server/app.py`). It wraps `PriceNegotiationEnvironment` and exposes it over HTTP and WebSocket. Each WebSocket client gets its own isolated environment instance (`SUPPORTS_CONCURRENT_SESSIONS = True`).
 
+When **`ENABLE_WEB_INTERFACE`** is set (see [Configuration](#configuration)), the app **replaces** the default `POST /reset`, `POST /step`, and `GET /state` handlers with a **single persistent browser session** backed by a dedicated `PriceNegotiationEnvironment` instance. That mode serves the static UI from `server/static/` at **`/`** (the Docker image and `run_local.sh` enable this by default). It also builds a `TrajectoryResult` after each step and attaches **running** `score_trajectory()` values plus per-component breakdowns to JSON responses (see [Observation space](#observation-space)). The WebSocket API and other OpenEnv routes are unchanged.
+
 ### Episode lifecycle
 
 `reset()` produces a **fully clean state** — new episode UUID, zeroed step count, freshly sampled scenario, and newly seeded chat histories. No state leaks between episodes.
@@ -112,9 +115,11 @@ env.step(buyer_response)
            return ONGOING, done=False  →  buyer acts again
 ```
 
-### Reward design: end-of-episode, not step-level
+### Reward design: end-of-episode core, running score in the web UI
 
-The reward is intentionally **end-of-episode** — `reward=0.0` is returned at every step, and the full `score_trajectory()` is computed once the episode terminates. This is a deliberate design choice: intermediate rewards in negotiation are misleading (a high offer in round 1 looks bad but may be a good anchor). The six-component reward provides rich, multi-dimensional signal at episode end, which is sufficient for policy gradient methods (REINFORCE, PPO with episode returns) and preference-based methods (DPO, RLHF).
+In the **`PriceNegotiationEnvironment`** implementation, **`observation.reward` stays `0.0` at every step** so the canonical OpenEnv contract is unchanged: grading is driven by **`reward_breakdown()` + `score_trajectory()` on a finished `TrajectoryResult`**.
+
+When the **bundled HTTP UI** is enabled (`ENABLE_WEB_INTERFACE=true`), each **`POST /step`** still returns that canonical observation shape, but the response also fills **`reward`** (and mirrored fields under **`observation`**) with **`score_trajectory()` evaluated on the trajectory so far, plus **`reward_breakdown`**, **`reward_weights`**, and **`reward_components`**. Those extras power the Reward card’s **View breakdown** modal (per-component **`2 × 2` metric tiles** plus summary strip, optional GitHub shortcut in the page header). They do **not** change how the seller or environment logic behaves; they are telemetry for debugging and demos.
 
 ### Action space
 
@@ -136,7 +141,10 @@ Natural language reasoning may appear before the tag. The environment uses a reg
 | `negotiation_round` | `int` | Step number (0 after reset, increments each step) |
 | `next_turn` | `BUYER` \| `SELLER` | Who acts next |
 | `done` | `bool` | Whether the episode has ended |
-| `reward` | `float` | Always `0.0` during episode; use `score_trajectory()` for final score |
+| `reward` | `float` | `0.0` from the core environment during the episode; with **`ENABLE_WEB_INTERFACE`**, HTTP `/step` overwrites serialization with running `score_trajectory()` |
+| `reward_breakdown` | `dict[str, float]` \| `null` | Raw per-component scores; set when the web overlay computes breakdowns (`null` on reset path until first graded step / standard clients leave unset) |
+| `reward_weights` | `dict[str, float]` \| `null` | Fixed **⅙** weight per component matching `score_trajectory()`’s equal mean |
+| `reward_components` | `dict[str, object]` \| `null` | Per-component `{ raw, score, weight, weighted_score }` where `score` applies the aggregation map (below) before averaging |
 
 ### State (via `GET /state`)
 
@@ -159,6 +167,8 @@ Natural language reasoning may appear before the tag. The environment uses a reg
 | `GET` | `/health` | Health check |
 | `WS` | `/ws` | Persistent WebSocket session (used by the Python client) |
 
+With **`ENABLE_WEB_INTERFACE=true`**, `POST /reset`, `POST /step`, and `GET /state` use the web session described above (`GET /state` returns `PriceNegotiationState` only — no synthesized reward metadata). Static assets live under **`/static`**; the HTML shell links a small **favicon** and stylesheet/script cache-busting query strings.
+
 ---
 
 ## ✨ Reward Functions & Novelty
@@ -175,7 +185,7 @@ All reward logic lives in `reward.py`. Scores are computed **offline** from a co
 
 4. **No ZOPA as a first-class task** — the hard scenario has `deal_possible = false`. Most negotiation environments only test deal-closing. Testing walk-away discipline on a scenario where the seller is convincing and the gap is small ($10) is a genuinely novel challenge.
 
-5. **Six-component reward with transparent normalisation** — each component is independently interpretable, normalised to `[0, 1]`, and averaged. Researchers can ablate individual components, weight them differently, or use them as separate reward heads in multi-objective RL.
+5. **Six-component reward with explicit aggregation scale** — each component stays on its interpretable native scale (`reward_breakdown`); `score_trajectory()` averages them on a **`[-1, 1]`-compatible map** (`walkaway_penalty` contributes `raw / 5`, everything else is already in **`[-1, 1]`** or **`[0, 1]`** as documented per function). Researchers can still ablate, reweight outside the helper, or use components as separate reward heads.
 
 ---
 
@@ -193,16 +203,20 @@ Returns `0.0` if no deal was reached or the final price cannot be inferred.
 
 ---
 
-### 2. `walkaway_penalty` — Decision correctness · `{-5.0, 1.0, 5.0}`
+### 2. `walkaway_penalty` — Decision correctness · `{0.0, −1.0, −5.0, +1.0, +5.0}`
 
-| ZOPA exists? | Deal reached? | Score | Reason |
-|---|---|---|---|
-| ✅ Yes | ✅ Yes | `+1.0` | Correct — closed a profitable deal |
-| ✅ Yes | ❌ No | `−5.0` | Wrong — walked away from value on the table |
-| ❌ No | ❌ No | `+1.0` | Correct — recognised an impossible deal and walked |
-| ❌ No | ✅ Yes | `+5.0` | Rare bonus — seller accepted even though no ZOPA existed |
+`reward_state()` now carries **`deal_status`** (episode still **ONGOING**, or terminal status) and **`turn`** (`negotiation_round` at the terminal observation; `0` if no buyer step landed yet).
 
-The `−5.0` penalty dominates the final score, making deal completion the primary training signal when a ZOPA exists.
+| Situation | Score | Reason |
+|-----------|-------|--------|
+| `deal_status == ONGOING` | `0.0` | Negotiation unfinished — neither reward nor penalise the terminal rule yet |
+| Deal reached **on negotiation round `1`** | `−1.0` | **Premature acceptance** — the buyer closed before probing the seller |
+| ZOPA exists & deal reached (not caught above) | `+1.0` | Economically sensible close |
+| ZOPA exists & walked away | `−5.0` | Wrong — surplus left on the table |
+| No ZOPA & walked away | `+1.0` | Correct restraint |
+| No ZOPA & deal reached | `+5.0` | Rare path — seller conceded into a deal that looked impossible on paper |
+
+The `−5.0` penalty still dominates when a ZOPA existed and the buyer gave up.
 
 ---
 
@@ -226,7 +240,7 @@ Example (max_turns = 10):
   closed on turn 8  →  (10 − 8) / 10  =  0.20
 ```
 
-Returns `0.0` if no deal was reached.
+Returns `0.0` if no deal was reached. **First-round closes** also return `0.0` (they are treated as premature for efficiency, consistent with `walkaway_penalty`).
 
 ---
 
@@ -260,15 +274,17 @@ Per-step scores are averaged and clamped to `[-1, 1]`. Returns `0.0` if fewer th
 
 ### Aggregation — `score_trajectory()`
 
-```
-surplus_reward              → (raw + 1) / 2
-walkaway_penalty            → (raw + 5) / 10
-format_reward               → unchanged  (already [0, 1])
-efficiency_bonus            → unchanged  (already [0, 1])
-anchoring_reward            → (raw + 1) / 2
-negotiation_progress_reward → (raw + 1) / 2
+Component values are averaged on an aggregate scale suitable for **`[-1, 1]`** summaries:
 
-final_score = mean of all six  ∈ [0, 1]
+```
+surplus_reward              → unchanged  (already [−1, 1])
+walkaway_penalty            → raw / 5    (maps {−5, …, +5} into [−1, 1])
+format_reward               → unchanged  ([0, 1])
+efficiency_bonus            → unchanged  ([0, 1])
+anchoring_reward            → unchanged  ([−1, 1])
+negotiation_progress_reward → unchanged  ([−1, 1])
+
+final_score = mean of all six  ∈ [−1, 1]
 ```
 
 ```python
@@ -277,14 +293,14 @@ from price_negotiation.reward import reward_breakdown, score_trajectory
 breakdown = reward_breakdown(trajectory)
 # {
 #   'surplus_reward': 0.83,        # captured 83% of ZOPA
-#   'walkaway_penalty': 1.0,       # correct deal decision
+#   'walkaway_penalty': 1.0,       # raw +1.0 → +0.2 on aggregate scale (+1÷5 before the six-way mean)
 #   'format_reward': 1.0,          # all turns had valid tags
 #   'efficiency_bonus': 0.70,      # closed on turn 3 of 10
 #   'anchoring_reward': 0.60,      # opened near ideal anchor
 #   'negotiation_progress_reward': 0.50   # controlled concessions
 # }
 
-score = score_trajectory(trajectory)   # e.g. 0.772
+score = score_trajectory(trajectory)   # e.g. ≈ +0.64 for the illustrative numbers above
 ```
 
 ---
@@ -323,7 +339,7 @@ docker build -t price_negotiation-env:latest -f Dockerfile .
 openenv push
 ```
 
-The Space runs on port `8000`. The web UI is served at `/web`.
+The Space runs on port `8000`. The Docker image enables **`ENABLE_WEB_INTERFACE`**, so the buyer playground is served at **`/`** (static files under **`/static`**).
 
 > **Keep the YAML frontmatter and `openenv.yaml` intact** — they control the Space configuration.
 
@@ -348,9 +364,13 @@ export HF_TOKEN=your_hf_token_here
 export API_BASE_URL="https://router.huggingface.co/v1"
 export SELLER_MODEL="Qwen/Qwen2.5-72B-Instruct"   # optional, this is the default
 
+# Convenience script: launches uvicorn with ENABLE_WEB_INTERFACE=true
+./run_local.sh
+
+# Or run the API without swapping HTTP routes / without the bundled UI shell:
 uv run --project . server
 # or
-uv run uvicorn server.app:app --reload --host 0.0.0.0 --port 8000
+ENABLE_WEB_INTERFACE=false uv run uvicorn server.app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
@@ -403,7 +423,8 @@ async with PriceNegotiationEnv(base_url="http://localhost:8000") as env:
 | `BUYER_MODEL` / `MODEL_NAME` | Model for buyer turns in `inference.py` | `Qwen/Qwen2.5-72B-Instruct` |
 | `ENV_BASE_URL` | Server URL used by `inference.py` | `https://viditostwal-price-negotiation.hf.space` |
 | `BUYER_TEMPERATURE` | Sampling temperature for buyer LLM | `0.7` |
-| `SUCCESS_SCORE_THRESHOLD` | Minimum `score_trajectory` to count as success | `0.4` |
+| `SUCCESS_SCORE_THRESHOLD` | Minimum `score_trajectory` to count as success (same **[-1, 1]** aggregate as grading) | `0.4` |
+| `ENABLE_WEB_INTERFACE` | Replace HTTP `/reset` `/step` `/state`, serve `server/static` at **`/`** | `false` locally unless set; **`true`** in Docker / `run_local.sh` |
 | `DEBUG` | Set to `1` / `true` to enable verbose debug logs | `false` |
 
 **Minimal setup (HF token only):**
@@ -426,19 +447,27 @@ uv run python inference.py
 
 ### stdout format
 
+Each `[STEP]` line prints **`reward=`** as the cumulative `score_trajectory()` aggregate on the **prefix trajectory opened so far** (same **`[-1, 1]`** mean as the final line). The environment’s internal `observation.reward` remains `0.0` until you grade offline; this column is added by the logger for visibility.
+
 ```
 [START] task=easy env=price_negotiation model=Qwen/Qwen2.5-72B-Instruct
-[STEP]  step=1 action=('INVALID', None)    reward=0.25 done=false error=null
-[STEP]  step=2 action=('OFFER', 1400.0)   reward=0.35 done=false error=null
-[STEP]  step=3 action=('OFFER', 1500.0)   reward=0.57 done=true  error=null
-[END]   task=easy success=true steps=3 score=0.572 rewards={"surplus_reward":-1.0,"walkaway_penalty":1.0,"format_reward":0.667,"efficiency_bonus":0.7,"anchoring_reward":0.226,"negotiation_progress_reward":0.704}
+[STEP]  step=1 action=('INVALID', None)    reward=… done=false error=null
+[STEP]  step=2 action=('OFFER', 1400.0)   reward=… done=false error=null
+[STEP]  step=3 action=('OFFER', 1500.0)   reward=… done=true  error=null
+[END]   task=easy success=false steps=3 score=0.249 rewards={"surplus_reward":-1.0,"walkaway_penalty":1.0,"format_reward":0.667,"efficiency_bonus":0.7,"anchoring_reward":0.226,"negotiation_progress_reward":0.704}
 ```
+
+Using the printed **`rewards=`** breakdown with the aggregation map above,
+
+`score = (−1.0 + 1.0/5 + 0.667 + 0.7 + 0.226 + 0.704) / 6 ≈ 0.25`, below the default **`SUCCESS_SCORE_THRESHOLD=0.4`**, hence `success=false` in this toy tail.
 
 **Two important notes on the output:**
 
-1. **`reward` in `[STEP]` lines is not a step-level environment reward.** The environment always returns `reward=0.0` during the episode. The value shown is `score_trajectory()` computed on the partial trajectory up to that step — it is a running estimate that updates as the episode progresses, not a signal from the environment.
+1. **`reward` in `[STEP]` lines mirrors `score_trajectory()` on the prefix trajectory.** Core `Observation.reward` stays `0.0` until you grade offline, but the logger reads the cumulative breakdown and reports the same aggregate you would get from `score_trajectory()` at that prefix — now on the **`[-1, 1]`** mean scale.
 
 2. **Scores vary across runs.** The grader (`reward.py`) is pure Python arithmetic and is fully deterministic given the same trajectory. However, the trajectory is LLM-driven on both sides — the buyer agent and the seller LLM both sample stochastically. Every new run on the same scenario produces a different conversation and therefore a different score. This is a feature, not a bug: diverse trajectories give the RL policy a richer reward signal and broader exploration of the strategy space.
+
+Tuning note: **`SUCCESS_SCORE_THRESHOLD` defaults to `0.4` on the new scale.** If your evaluation harness was calibrated against the retired `[0, 1]` normalisation bump that threshold upward or downward after spot-checking a few traces.
 
 > **Note on step 1:** `rollout.py` sends a fixed canned opener on the very first turn (`initial_buyer_message()`) to avoid wasting an LLM call on a trivial greeting. This is why step 1 always shows `INVALID` — the opener contains no action tag.
 
@@ -476,20 +505,20 @@ The buyer accepted at **$190** — $40 above its own true value of $150. There w
 | `anchoring_reward` | `−0.1` | First offer $180; ideal = `0.65 × $150 = $97.50`; `1.0 − 2 × (82.5/150) = −0.1` | ❌ Opened way too high |
 | `negotiation_progress_reward` | `−0.14` | $180→$190: score=0.73; $190→$185: backtrack → −1.0; avg = −0.14 | ⚠️ Backtracked once |
 
-**Normalised and aggregated:**
+**Aggregated (current `score_trajectory()` — mean on native / scaled components):**
 
 ```
-surplus_reward              (-1.0 + 1) / 2  =  0.00
-walkaway_penalty            ( 5.0 + 5) / 10 =  1.00
-format_reward                               =  0.80
-efficiency_bonus                            =  0.50
-anchoring_reward            (-0.1 + 1) / 2  =  0.45
-negotiation_progress_reward (-0.14 + 1) / 2 =  0.43
+surplus_reward              =  −1.00      (already on [−1, 1])
+walkaway_penalty            =    5.0 / 5  =  +1.00
+format_reward               =   +0.80
+efficiency_bonus            =   +0.50
+anchoring_reward            =   −0.10      (already on [−1, 1])
+negotiation_progress_reward =   −0.14      (already on [−1, 1])
 
-final_score = (0.00 + 1.00 + 0.80 + 0.50 + 0.45 + 0.43) / 6 ≈ 0.530
+final_score = (−1.00 + 1.00 + 0.80 + 0.50 − 0.10 − 0.14) / 6 ≈ 0.18
 ```
 
-> **Key lesson:** Even with the rare `walkaway_penalty` bonus (+5.0), the score is only ~0.53 because `surplus_reward` and `anchoring_reward` both score poorly. A well-trained agent should have walked away: `walkaway_penalty = +1.0` (correct walk), `surplus_reward = 0.0` (no deal, no penalty), and a low anchor near $97 would score `anchoring_reward ≈ +1.0`, yielding a final score well above 0.6.
+> **Key lesson:** The rare `walkaway_penalty` **+5.0** raw bonus still maps to **+1.0** on the aggregate channel (`÷5`), but **negative `surplus_reward` pulls the mean down hard** instead of being squashed toward the centre of `[0, 1]` like under the retired normalisation. A model that anchors low and walks on impossible deals climbs the scale much faster than one that trophies a bad surplus outcome.
 
 ---
 
@@ -508,10 +537,16 @@ final_score = (0.00 + 1.00 + 0.80 + 0.50 + 0.45 + 0.43) / 6 ≈ 0.530
 ├── openenv.yaml              # OpenEnv Space deployment config
 ├── pyproject.toml            # Package metadata and dependencies
 ├── validate-submission.sh    # Submission validation helper
+├── run_local.sh              # Start uvicorn with ENABLE_WEB_INTERFACE=true (browser UI at /)
 └── server/
-    ├── app.py                # FastAPI app (create_app factory)
+    ├── app.py                # FastAPI app (create_app factory + optional web session layer)
     ├── price_negotiation_environment.py  # Core environment logic
     ├── helper_functions.py   # OpenAI-compatible LLM client wrapper
     ├── dataset.json          # 3 negotiation scenarios (easy / medium / hard)
-    └── requirements.txt      # Server-only pip dependencies
+    ├── requirements.txt      # Server-only pip dependencies
+    └── static/
+        ├── index.html        # Buyer UI shell (reward + product modals, quick actions)
+        ├── app.js            # Calls /reset · /step · /state against the web session
+        ├── styles.css        # Layout / reward breakdown grid styling
+        └── favicon.svg       # Lightweight tab icon for the playground
 ```

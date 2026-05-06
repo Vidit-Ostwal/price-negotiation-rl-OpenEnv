@@ -4,19 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Price Negotiation</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=20260506-1340">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=20260506-1323">
 </head>
 <body>
   <div class="container">
     <header class="header">
       <div class="header-icon">🤝</div>
-      <div>
+      <div class="header-copy">
         <h1>Price Negotiation</h1>
         <p>Play as the buyer — reset an episode, make offers, and close the deal.</p>
       </div>
+      <a
+        class="github-link"
+        href="https://github.com/Vidit-Ostwal/price-negotiation-rl-OpenEnv"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open GitHub repository"
+      >
+        <span class="github-mark">GitHub</span>
+        <span class="github-arrow">↗</span>
+      </a>
     </header>
 
     <div class="metrics">
@@ -28,9 +39,12 @@
         <div class="metric-label">Deal Status</div>
         <div class="metric-value" id="metric-status">—</div>
       </div>
-      <div class="metric-card">
+      <div class="metric-card reward-info-card">
         <div class="metric-label">Reward</div>
         <div class="metric-value" id="metric-reward">—</div>
+        <button id="reward-info-btn" class="product-info-btn reward-info-btn" type="button" disabled>
+          View breakdown
+        </button>
       </div>
       <div class="metric-card product-info-card">
         <div class="metric-label">Product Info</div>
@@ -49,7 +63,7 @@
       </select>
       <button id="reset-btn" class="btn btn-secondary">Reset Episode</button>
     </div>
-    <div class="main-layout hidden" id="main-layout">
+    <div class="main-layout hidden" id="main-layout" hidden style="display: none;">
       <main class="content">
         <div class="chat-panel">
           <div class="chat-header">
@@ -90,7 +104,7 @@
             id="buyer-input" 
             rows="4" 
             placeholder="Type your reply, or use the quick-action buttons.
-Tags: <action>OFFER $X</action>  <action>ACCEPT</action>  <action>WALK</action>"></textarea>
+Tags: &lt;action&gt;OFFER $X&lt;/action&gt;  &lt;action&gt;ACCEPT&lt;/action&gt;  &lt;action&gt;WALK&lt;/action&gt;"></textarea>
           <button id="step-btn" class="btn btn-primary">Step →</button>
         </div>
       </main>
@@ -98,7 +112,21 @@ Tags: <action>OFFER $X</action>  <action>ACCEPT</action>  <action>WALK</action>"
 
   </div>
 
-  <div class="modal-backdrop" id="product-info-modal" aria-hidden="true">
+  <div class="modal-backdrop" id="reward-info-modal" aria-hidden="true" hidden style="display: none;">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reward-info-title">
+      <div class="modal-header">
+        <div>
+          <div class="metric-label">Reward Details</div>
+          <h2 id="reward-info-title">Reward Breakdown</h2>
+        </div>
+        <button id="reward-info-close" class="modal-close" type="button" aria-label="Close reward breakdown">×</button>
+      </div>
+      <div class="product-summary reward-summary" id="reward-summary"></div>
+      <div id="reward-info-content" class="product-info-content reward-info-content"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="product-info-modal" aria-hidden="true" hidden style="display: none;">
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="product-info-title">
       <div class="modal-header">
         <div>
@@ -112,6 +140,6 @@ Tags: <action>OFFER $X</action>  <action>ACCEPT</action>  <action>WALK</action>"
     </section>
   </div>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260506-1323"></script>
 </body>
 </html>

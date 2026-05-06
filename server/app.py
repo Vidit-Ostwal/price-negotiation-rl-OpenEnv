@@ -47,9 +47,13 @@ except Exception as e:  # pragma: no cover
 
 try:
     from ..models import PriceNegotiationAction, PriceNegotiationObservation
+    from ..reward import reward_breakdown, score_trajectory
+    from ..trajectory_types import TrajectoryResult, TrajectoryStep
     from .price_negotiation_environment import PriceNegotiationEnvironment
 except ImportError:
     from models import PriceNegotiationAction, PriceNegotiationObservation
+    from reward import reward_breakdown, score_trajectory
+    from trajectory_types import TrajectoryResult, TrajectoryStep
     from server.price_negotiation_environment import PriceNegotiationEnvironment
 
 
@@ -61,11 +65,24 @@ app = create_fastapi_app(
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
 
+REWARD_COMPONENT_WEIGHTS = {
+    "surplus_reward": 1.0 / 6.0,
+    "walkaway_penalty": 1.0 / 6.0,
+    "format_reward": 1.0 / 6.0,
+    "efficiency_bonus": 1.0 / 6.0,
+    "anchoring_reward": 1.0 / 6.0,
+    "negotiation_progress_reward": 1.0 / 6.0,
+}
+
 # Mount custom static UI
 enable_web = os.getenv("ENABLE_WEB_INTERFACE", "false").lower() in ("true", "1", "yes")
 if enable_web:
     static_dir = Path(__file__).parent / "static"
     web_env = PriceNegotiationEnvironment()
+    web_trajectory: dict[str, Any] = {
+        "initial_observation": None,
+        "steps": [],
+    }
 
     def remove_route(path: str, method: str) -> None:
         """Replace OpenEnv's stateless HTTP route with the web UI's session route."""
@@ -77,6 +94,80 @@ if enable_web:
                 and method in (getattr(route, "methods", None) or set())
             )
         ]
+
+    def latest_seller_reply() -> str | None:
+        """Return the latest seller assistant reply for trajectory scoring."""
+        for message in reversed(web_env.state.seller_messages):
+            if message.get("role") == "assistant":
+                return message.get("content", "")
+        return None
+
+    def build_web_trajectory() -> TrajectoryResult:
+        """Build the current web UI trajectory from accumulated step snapshots."""
+        initial_observation = web_trajectory["initial_observation"]
+        if initial_observation is None:
+            initial_observation = PriceNegotiationObservation(
+                next_turn="BUYER",
+                negotiation_round=0,
+                deal_status="ONGOING",
+                done=False,
+                reward=0.0,
+            )
+
+        return TrajectoryResult(
+            episode_id=web_env.state.episode_id,
+            initial_observation=initial_observation,
+            final_state=web_env.state.model_copy(deep=True),
+            steps=web_trajectory["steps"],
+        )
+
+    def aggregate_reward_component(name: str, raw_score: float) -> float:
+        """Convert a raw component to the [-1, 1] aggregate scale."""
+        if name == "walkaway_penalty":
+            return raw_score / 5.0
+        return raw_score
+
+    def build_reward_components(
+        breakdown: dict[str, float] | None,
+    ) -> dict[str, dict[str, float]] | None:
+        """Attach aggregate-scale scores, weights, and weighted contribution."""
+        if breakdown is None:
+            return None
+
+        return {
+            name: {
+                "raw": raw_score,
+                "score": aggregate_reward_component(name, raw_score),
+                "weight": REWARD_COMPONENT_WEIGHTS[name],
+                "weighted_score": (
+                    aggregate_reward_component(name, raw_score)
+                    * REWARD_COMPONENT_WEIGHTS[name]
+                ),
+            }
+            for name, raw_score in breakdown.items()
+        }
+
+    def serialize_with_reward(
+        observation: PriceNegotiationObservation,
+        reward: float,
+        breakdown: dict[str, float] | None,
+    ) -> dict[str, Any]:
+        """Serialize an observation and attach web UI reward details."""
+        observation.reward = reward
+        observation.reward_breakdown = breakdown
+        observation.reward_weights = REWARD_COMPONENT_WEIGHTS if breakdown else None
+        observation.reward_components = build_reward_components(breakdown)
+        response = serialize_observation(observation)
+        reward_components = observation.reward_components
+        response["observation"]["reward"] = reward
+        response["observation"]["reward_breakdown"] = breakdown
+        response["observation"]["reward_weights"] = observation.reward_weights
+        response["observation"]["reward_components"] = reward_components
+        response["reward"] = reward
+        response["reward_breakdown"] = breakdown
+        response["reward_weights"] = observation.reward_weights
+        response["reward_components"] = reward_components
+        return response
 
     remove_route("/reset", "POST")
     remove_route("/step", "POST")
@@ -93,7 +184,9 @@ if enable_web:
             reset_kwargs["difficulty"] = difficulty
 
         observation = web_env.reset(**reset_kwargs)
-        return serialize_observation(observation)
+        web_trajectory["initial_observation"] = observation
+        web_trajectory["steps"] = []
+        return serialize_with_reward(observation, 0.0, None)
 
     @app.post("/step")
     async def web_step(payload: dict[str, Any] = Body(...)):
@@ -105,7 +198,18 @@ if enable_web:
             raise HTTPException(status_code=422, detail=e.errors()) from e
 
         observation = web_env.step(action)
-        return serialize_observation(observation)
+        web_trajectory["steps"].append(
+            TrajectoryStep(
+                buyer_response=action.buyer_response,
+                observation=observation,
+                state=web_env.state.model_copy(deep=True),
+                seller_reply=latest_seller_reply(),
+            )
+        )
+        trajectory = build_web_trajectory()
+        score = score_trajectory(trajectory)
+        breakdown = reward_breakdown(trajectory)
+        return serialize_with_reward(observation, score, breakdown)
 
     @app.get("/state")
     async def web_state():

@@ -100,6 +100,27 @@ class PriceNegotiationObservation(Observation):
             "accepted an offer; ``'WALKED_AWAY'`` when either side walked."
         ),
     )
+    reward_breakdown: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "Raw reward component scores for the current trajectory.  Present "
+            "when the web server computes trajectory reward details."
+        ),
+    )
+    reward_weights: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "Aggregation weight for each reward component.  Present alongside "
+            "``reward_breakdown`` when reward details are available."
+        ),
+    )
+    reward_components: dict[str, dict[str, float]] | None = Field(
+        default=None,
+        description=(
+            "Per-component reward details, including raw score, aggregate-scale "
+            "score, aggregation weight, and weighted contribution."
+        ),
+    )
 
 
 class PriceNegotiationState(State):

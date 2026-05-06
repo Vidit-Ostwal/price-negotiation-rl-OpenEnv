@@ -13,6 +13,11 @@ const productInfoModal = document.getElementById('product-info-modal');
 const productInfoClose = document.getElementById('product-info-close');
 const productSummary = document.getElementById('product-summary');
 const productInfoContent = document.getElementById('product-info-content');
+const rewardInfoBtn = document.getElementById('reward-info-btn');
+const rewardInfoModal = document.getElementById('reward-info-modal');
+const rewardInfoClose = document.getElementById('reward-info-close');
+const rewardSummary = document.getElementById('reward-summary');
+const rewardInfoContent = document.getElementById('reward-info-content');
 
 // Quick action buttons
 const actionCustom = document.getElementById('action-custom');
@@ -30,8 +35,27 @@ const metricReward = document.getElementById('metric-reward');
 
 // State
 let currentState = null;
+let currentRewardData = null;
 let isStepPending = false;
 let isEpisodeDone = true;
+
+const REWARD_COMPONENT_LABELS = {
+  surplus_reward: 'Surplus',
+  walkaway_penalty: 'Walkaway Decision',
+  format_reward: 'Action Format',
+  efficiency_bonus: 'Efficiency',
+  anchoring_reward: 'Opening Anchor',
+  negotiation_progress_reward: 'Negotiation Progress',
+};
+
+const REWARD_COMPONENT_DESCRIPTIONS = {
+  surplus_reward: 'Buyer surplus captured from the final accepted price.',
+  walkaway_penalty: 'Whether deal or walk-away was economically correct.',
+  format_reward: 'Share of buyer turns with a valid action tag.',
+  efficiency_bonus: 'How quickly the negotiation closed.',
+  anchoring_reward: 'Quality of the first buyer offer.',
+  negotiation_progress_reward: 'Smoothness of buyer concessions over time.',
+};
 
 function setStepPending(pending) {
   isStepPending = pending;
@@ -67,6 +91,22 @@ function formatCurrency(value, currency = 'USD') {
     currency,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatReward(value) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}${value.toFixed(3)}`;
+}
+
+function formatPercent(value) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function rewardTone(value) {
+  if (typeof value !== 'number' || Number.isNaN(value) || value === 0) return 'neutral';
+  return value > 0 ? 'positive' : 'negative';
 }
 
 function hasProductInfo(state) {
@@ -123,6 +163,28 @@ function appendInfoTable(parent, rows, currency = 'USD') {
   parent.appendChild(table);
 }
 
+function appendRewardMetricGrid(parent, rows) {
+  const grid = document.createElement('div');
+  grid.className = 'reward-metric-grid';
+
+  rows.forEach(([label, value]) => {
+    const item = document.createElement('div');
+    item.className = 'reward-metric-item';
+
+    const labelEl = document.createElement('span');
+    labelEl.textContent = formatLabel(label);
+
+    const valueEl = document.createElement('strong');
+    valueEl.textContent = value ?? '—';
+
+    item.appendChild(labelEl);
+    item.appendChild(valueEl);
+    grid.appendChild(item);
+  });
+
+  parent.appendChild(grid);
+}
+
 function appendTextBlock(parent, title, text) {
   if (!text) return;
 
@@ -163,6 +225,10 @@ function createInfoGroup(title, subtitle, defaultOpen = false) {
   details.appendChild(body);
 
   return { details, body };
+}
+
+function updateRewardInfoButton() {
+  rewardInfoBtn.disabled = !currentRewardData || !currentRewardData.reward_breakdown;
 }
 
 function renderProductInfo(state) {
@@ -258,6 +324,8 @@ function renderProductInfo(state) {
 
 function openProductInfoModal() {
   renderProductInfo(currentState);
+  productInfoModal.hidden = false;
+  productInfoModal.style.display = '';
   productInfoModal.classList.add('open');
   productInfoModal.setAttribute('aria-hidden', 'false');
   productInfoClose.focus();
@@ -266,16 +334,117 @@ function openProductInfoModal() {
 function closeProductInfoModal() {
   productInfoModal.classList.remove('open');
   productInfoModal.setAttribute('aria-hidden', 'true');
+  productInfoModal.hidden = true;
+  productInfoModal.style.display = 'none';
   productInfoBtn.focus();
+}
+
+function renderRewardInfo() {
+  const data = currentRewardData || {};
+  const reward = data.reward;
+  const components = data.reward_components || {};
+  const breakdown = data.reward_breakdown || {};
+  const weights = data.reward_weights || {};
+  const tone = rewardTone(reward);
+
+  rewardSummary.innerHTML = '';
+  const summaryItems = [
+    ['Score', formatReward(reward), tone],
+    ['Sign', tone === 'positive' ? 'Positive' : tone === 'negative' ? 'Negative' : 'Neutral', tone],
+    ['Components', String(Object.keys(breakdown).length || '—'), 'neutral'],
+    ['Total Weight', formatPercent(Object.values(weights).reduce((sum, value) => sum + value, 0)), 'neutral'],
+  ];
+
+  summaryItems.forEach(([label, value, itemTone]) => {
+    const item = document.createElement('div');
+    item.className = `product-summary-item reward-${itemTone}`;
+
+    const labelEl = document.createElement('span');
+    labelEl.textContent = label;
+
+    const valueEl = document.createElement('strong');
+    valueEl.textContent = value;
+
+    item.appendChild(labelEl);
+    item.appendChild(valueEl);
+    rewardSummary.appendChild(item);
+  });
+
+  rewardInfoContent.innerHTML = '';
+  if (!Object.keys(breakdown).length) {
+    const empty = document.createElement('p');
+    empty.className = 'empty-info';
+    empty.textContent = 'Take a step to compute reward breakdown details.';
+    rewardInfoContent.appendChild(empty);
+    return;
+  }
+
+  Object.entries(breakdown).forEach(([name, raw]) => {
+    const component = components[name] || {};
+    const card = document.createElement('div');
+    card.className = `reward-component reward-${rewardTone(raw)}`;
+
+    const header = document.createElement('div');
+    header.className = 'reward-component-header';
+
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('h3');
+    title.textContent = REWARD_COMPONENT_LABELS[name] || formatLabel(name);
+    const description = document.createElement('p');
+    description.textContent = REWARD_COMPONENT_DESCRIPTIONS[name] || 'Reward component score.';
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(description);
+
+    const rawScore = document.createElement('strong');
+    rawScore.textContent = formatReward(raw);
+
+    header.appendChild(titleWrap);
+    header.appendChild(rawScore);
+    card.appendChild(header);
+
+    appendRewardMetricGrid(card, [
+      ['raw_score', formatReward(raw)],
+      ['component_score', formatReward(component.score)],
+      ['weight', formatPercent(component.weight ?? weights[name])],
+      ['weighted_contribution', formatReward(component.weighted_score)],
+    ]);
+
+    rewardInfoContent.appendChild(card);
+  });
+}
+
+function openRewardInfoModal() {
+  renderRewardInfo();
+  rewardInfoModal.hidden = false;
+  rewardInfoModal.style.display = '';
+  rewardInfoModal.classList.add('open');
+  rewardInfoModal.setAttribute('aria-hidden', 'false');
+  rewardInfoClose.focus();
+}
+
+function closeRewardInfoModal() {
+  rewardInfoModal.classList.remove('open');
+  rewardInfoModal.setAttribute('aria-hidden', 'true');
+  rewardInfoModal.hidden = true;
+  rewardInfoModal.style.display = 'none';
+  rewardInfoBtn.focus();
 }
 
 // Update metrics from observation
 function updateMetricsFromResponse(data) {
   const obs = data.observation || {};
   const done = data.done ?? obs.done ?? false;
+  currentRewardData = {
+    reward: data.reward ?? obs.reward,
+    reward_breakdown: data.reward_breakdown ?? obs.reward_breakdown,
+    reward_weights: data.reward_weights ?? obs.reward_weights,
+    reward_components: data.reward_components ?? obs.reward_components,
+  };
   metricRound.textContent = obs.negotiation_round ?? '—';
   metricStatus.textContent = obs.deal_status ?? '—';
-  metricReward.textContent = data.reward ?? obs.reward ?? '—';
+  metricReward.textContent = formatReward(currentRewardData.reward);
+  metricReward.className = `metric-value reward-value reward-${rewardTone(currentRewardData.reward)}`;
+  updateRewardInfoButton();
   setEpisodeDone(done);
   
   // Update status card color
@@ -373,10 +542,14 @@ async function resetEpisode() {
     // Sync state after reset so chat and product info update automatically.
     await refreshState();
     
+    mainLayout.hidden = false;
+    mainLayout.style.display = '';
     mainLayout.classList.remove('hidden');
     buyerInput.value = '';
   } catch (error) {
     mainLayout.classList.add('hidden');
+    mainLayout.hidden = true;
+    mainLayout.style.display = 'none';
     setEpisodeDone(true);
     console.error('Reset error:', error);
   } finally {
@@ -484,9 +657,18 @@ productInfoModal.addEventListener('click', (e) => {
   if (e.target === productInfoModal) closeProductInfoModal();
 });
 
+rewardInfoBtn.addEventListener('click', openRewardInfoModal);
+rewardInfoClose.addEventListener('click', closeRewardInfoModal);
+rewardInfoModal.addEventListener('click', (e) => {
+  if (e.target === rewardInfoModal) closeRewardInfoModal();
+});
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && productInfoModal.classList.contains('open')) {
     closeProductInfoModal();
+  }
+  if (e.key === 'Escape' && rewardInfoModal.classList.contains('open')) {
+    closeRewardInfoModal();
   }
 });
 
