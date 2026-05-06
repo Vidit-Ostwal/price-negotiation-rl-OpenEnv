@@ -28,14 +28,22 @@ Usage:
     python -m server.app
 """
 
+import os
+from pathlib import Path
+from typing import Any
+
+from fastapi import Body, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
+
 try:
-    from openenv.core.env_server.http_server import create_app
+    from openenv.core.env_server.serialization import serialize_observation
+    from openenv.core.env_server.http_server import create_fastapi_app
 except Exception as e:  # pragma: no cover
     raise ImportError(
         "openenv is required for the web interface. Install dependencies with '\n    uv sync\n'"
     ) from e
-
-from fastapi.responses import RedirectResponse
 
 try:
     from ..models import PriceNegotiationAction, PriceNegotiationObservation
@@ -45,20 +53,71 @@ except ImportError:
     from server.price_negotiation_environment import PriceNegotiationEnvironment
 
 
-# Create the app with web interface and README integration
-app = create_app(
+# Build the core OpenEnv HTTP/WS API.
+app = create_fastapi_app(
     PriceNegotiationEnvironment,
     PriceNegotiationAction,
     PriceNegotiationObservation,
-    env_name="price_negotiation",
     max_concurrent_envs=1,  # increase this number to allow more concurrent WebSocket sessions
 )
 
+# Mount custom static UI
+enable_web = os.getenv("ENABLE_WEB_INTERFACE", "false").lower() in ("true", "1", "yes")
+if enable_web:
+    static_dir = Path(__file__).parent / "static"
+    web_env = PriceNegotiationEnvironment()
 
-@app.get("/", include_in_schema=False)
-async def root_redirect():
-    """Redirect root URL to the Gradio web interface at /web."""
-    return RedirectResponse(url="/web")
+    def remove_route(path: str, method: str) -> None:
+        """Replace OpenEnv's stateless HTTP route with the web UI's session route."""
+        app.router.routes = [
+            route
+            for route in app.router.routes
+            if not (
+                getattr(route, "path", None) == path
+                and method in (getattr(route, "methods", None) or set())
+            )
+        ]
+
+    remove_route("/reset", "POST")
+    remove_route("/step", "POST")
+    remove_route("/state", "GET")
+
+    @app.post("/reset")
+    async def web_reset(
+        payload: dict[str, Any] | None = Body(default=None),
+        difficulty: str | None = None,
+    ):
+        """Reset the persistent local web UI episode."""
+        reset_kwargs = payload or {}
+        if difficulty and difficulty != "any":
+            reset_kwargs["difficulty"] = difficulty
+
+        observation = web_env.reset(**reset_kwargs)
+        return serialize_observation(observation)
+
+    @app.post("/step")
+    async def web_step(payload: dict[str, Any] = Body(...)):
+        """Step the persistent local web UI episode."""
+        action_data = payload.get("action", payload)
+        try:
+            action = PriceNegotiationAction(**action_data)
+        except ValidationError as e:
+            raise HTTPException(status_code=422, detail=e.errors()) from e
+
+        observation = web_env.step(action)
+        return serialize_observation(observation)
+
+    @app.get("/state")
+    async def web_state():
+        """Return the persistent local web UI state, including product_info."""
+        return web_env.state.model_dump()
+
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+    
+    @app.get("/", include_in_schema=False)
+    async def root():
+        """Serve custom HTML UI at root."""
+        return FileResponse(static_dir / "index.html")
 
 
 def main(host: str = "0.0.0.0", port: int = 8000):

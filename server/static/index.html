@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Price Negotiation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-icon">🤝</div>
+      <div>
+        <h1>Price Negotiation</h1>
+        <p>Play as the buyer — reset an episode, make offers, and close the deal.</p>
+      </div>
+    </header>
+
+    <div class="metrics">
+      <div class="metric-card">
+        <div class="metric-label">Round</div>
+        <div class="metric-value" id="metric-round">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Deal Status</div>
+        <div class="metric-value" id="metric-status">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Reward</div>
+        <div class="metric-value" id="metric-reward">—</div>
+      </div>
+      <div class="metric-card product-info-card">
+        <div class="metric-label">Product Info</div>
+        <button id="product-info-btn" class="product-info-btn" type="button" disabled>
+          View details
+        </button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <select id="difficulty" class="select">
+        <option value="any">Cycle all scenarios</option>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+      <button id="reset-btn" class="btn btn-secondary">Reset Episode</button>
+    </div>
+    <div class="main-layout hidden" id="main-layout">
+      <main class="content">
+        <div class="chat-panel">
+          <div class="chat-header">
+            <div>
+              <div class="metric-label">Conversation</div>
+              <h2>Buyer and Seller Messages</h2>
+            </div>
+          </div>
+          <div class="chat-card" id="chat-card"></div>
+        </div>
+
+        <div class="input-group">
+          <label for="buyer-input">Buyer Response</label>
+          <div class="response-actions">
+            <button class="action-btn action-custom" id="action-custom" type="button" data-tooltip="Use this for better negotiation with a custom message. Type your reply, then click Step.">
+              <span class="action-icon">✎</span>
+              <span>Custom</span>
+            </button>
+            <button class="action-btn action-offer" id="action-offer" type="button" data-tooltip="Enter a price and send an OFFER action directly to the seller.">
+              <span class="action-icon">$</span>
+              <span>Make an offer</span>
+            </button>
+            <button class="action-btn action-accept" id="action-accept" type="button" data-tooltip="Accept the current deal and end the episode successfully.">
+              <span class="action-icon">✓</span>
+              <span>Accept deal</span>
+            </button>
+            <button class="action-btn action-walk" id="action-walk" type="button" data-tooltip="Walk away from the negotiation and end the episode.">
+              <span class="action-icon">✕</span>
+              <span>Walk away</span>
+            </button>
+          </div>
+          <div class="offer-input-row" id="offer-input-row">
+            <span class="dollar-sign">$</span>
+            <input type="number" id="offer-amount" placeholder="Enter offer amount" min="0">
+            <button id="offer-ok-btn" class="offer-ok" type="button">Offer</button>
+          </div>
+          <textarea 
+            id="buyer-input" 
+            rows="4" 
+            placeholder="Type your reply, or use the quick-action buttons.
+Tags: <action>OFFER $X</action>  <action>ACCEPT</action>  <action>WALK</action>"></textarea>
+          <button id="step-btn" class="btn btn-primary">Step →</button>
+        </div>
+      </main>
+    </div>
+
+  </div>
+
+  <div class="modal-backdrop" id="product-info-modal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="product-info-title">
+      <div class="modal-header">
+        <div>
+          <div class="metric-label">Scenario Data</div>
+          <h2 id="product-info-title">Product Info</h2>
+        </div>
+        <button id="product-info-close" class="modal-close" type="button" aria-label="Close product info">×</button>
+      </div>
+      <div class="product-summary" id="product-summary"></div>
+      <div id="product-info-content" class="product-info-content"></div>
+    </section>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
