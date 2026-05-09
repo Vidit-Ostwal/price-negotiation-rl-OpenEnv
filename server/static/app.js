@@ -39,6 +39,14 @@ let currentRewardData = null;
 let isStepPending = false;
 let isEpisodeDone = true;
 
+function hasBuyerInput() {
+  return buyerInput.value.trim().length > 0;
+}
+
+function updateStepButtonState() {
+  stepBtn.disabled = isEpisodeDone || isStepPending || !hasBuyerInput();
+}
+
 const REWARD_COMPONENT_LABELS = {
   surplus_reward: 'Surplus',
   walkaway_penalty: 'Walkaway Decision',
@@ -59,7 +67,7 @@ const REWARD_COMPONENT_DESCRIPTIONS = {
 
 function setStepPending(pending) {
   isStepPending = pending;
-  stepBtn.disabled = pending || isEpisodeDone;
+  updateStepButtonState();
   resetBtn.disabled = pending;
   difficultySelect.disabled = pending;
   buyerInput.disabled = pending || isEpisodeDone;
@@ -74,7 +82,7 @@ function setStepPending(pending) {
 
 function setEpisodeDone(done) {
   isEpisodeDone = done;
-  stepBtn.disabled = done || isStepPending;
+  updateStepButtonState();
   buyerInput.disabled = done || isStepPending;
   actionCustom.disabled = done || isStepPending;
   actionOffer.disabled = done || isStepPending;
@@ -553,7 +561,7 @@ async function resetEpisode() {
     setEpisodeDone(true);
     console.error('Reset error:', error);
   } finally {
-    stepBtn.disabled = isEpisodeDone || isStepPending;
+    updateStepButtonState();
     resetBtn.disabled = false;
   }
 }
@@ -562,7 +570,8 @@ async function resetEpisode() {
 async function stepEpisode(responseText) {
   if (isStepPending || isEpisodeDone) return;
 
-  const buyerResponse = (responseText ?? buyerInput.value).trim();
+  const textValue = typeof responseText === 'string' ? responseText : buyerInput.value;
+  const buyerResponse = textValue.trim();
   if (!buyerResponse) {
     return;
   }
@@ -674,7 +683,7 @@ document.addEventListener('keydown', (e) => {
 
 // Event listeners
 resetBtn.addEventListener('click', resetEpisode);
-stepBtn.addEventListener('click', stepEpisode);
+stepBtn.addEventListener('click', () => stepEpisode());
 
 buyerInput.addEventListener('keydown', (e) => {
   // Ctrl/Cmd + Enter to submit
@@ -683,6 +692,7 @@ buyerInput.addEventListener('keydown', (e) => {
     stepEpisode();
   }
 });
+buyerInput.addEventListener('input', updateStepButtonState);
 
 setEpisodeDone(true);
 
